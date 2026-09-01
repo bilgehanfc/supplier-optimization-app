@@ -4635,6 +4635,289 @@ def supplier_optimization_page() -> None:
         </svg>
         """
 
+    def build_pdf_report(
+        report_data: pd.DataFrame,
+        part_number: str,
+        part_description: str,
+        method_label: str,
+        recommended_supplier: str,
+        recommended_row: dict[str, Any],
+        recommended_final_score: float,
+        generated_at: str,
+    ) -> bytes:
+        """Build a polished, self-contained PDF report for the current result."""
+        import os
+
+        from reportlab.lib import colors
+        from reportlab.lib.pagesizes import A4, landscape
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.platypus import (
+            PageBreak,
+            Paragraph,
+            SimpleDocTemplate,
+            Spacer,
+            Table,
+            TableStyle,
+        )
+
+        page_size = landscape(A4)
+        dark_blue = colors.HexColor("#0B1F3A")
+        panel_blue = colors.HexColor("#10273B")
+        corporate_blue = colors.HexColor("#00ADEF")
+        border_blue = colors.HexColor("#315B85")
+        light_gray = colors.HexColor("#EEF3F7")
+        text_gray = colors.HexColor("#425466")
+
+        regular_font = "Helvetica"
+        bold_font = "Helvetica-Bold"
+        font_candidates = [
+            (
+                os.path.join(os.environ.get("WINDIR", r"C:\\Windows"), "Fonts", "arial.ttf"),
+                os.path.join(os.environ.get("WINDIR", r"C:\\Windows"), "Fonts", "arialbd.ttf"),
+            ),
+            (
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+                "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            ),
+            (
+                "/usr/share/fonts/truetype/liberation2/LiberationSans-Regular.ttf",
+                "/usr/share/fonts/truetype/liberation2/LiberationSans-Bold.ttf",
+            ),
+        ]
+        for regular_path, bold_path in font_candidates:
+            if os.path.exists(regular_path) and os.path.exists(bold_path):
+                try:
+                    pdfmetrics.registerFont(TTFont("PortalSans", regular_path))
+                    pdfmetrics.registerFont(TTFont("PortalSans-Bold", bold_path))
+                    regular_font = "PortalSans"
+                    bold_font = "PortalSans-Bold"
+                    break
+                except Exception:
+                    # Keep the built-in Helvetica fallback if a system font cannot load.
+                    continue
+
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "PortalPdfTitle",
+            parent=styles["Title"],
+            fontName=bold_font,
+            fontSize=20,
+            leading=24,
+            textColor=dark_blue,
+            spaceAfter=4,
+        )
+        subtitle_style = ParagraphStyle(
+            "PortalPdfSubtitle",
+            parent=styles["Normal"],
+            fontName=regular_font,
+            fontSize=9.5,
+            leading=13,
+            textColor=text_gray,
+            spaceAfter=12,
+        )
+        section_style = ParagraphStyle(
+            "PortalPdfSection",
+            parent=styles["Heading2"],
+            fontName=bold_font,
+            fontSize=12,
+            leading=15,
+            textColor=dark_blue,
+            spaceBefore=8,
+            spaceAfter=6,
+        )
+        body_style = ParagraphStyle(
+            "PortalPdfBody",
+            parent=styles["Normal"],
+            fontName=regular_font,
+            fontSize=8.5,
+            leading=11,
+            textColor=text_gray,
+        )
+        cell_style = ParagraphStyle(
+            "PortalPdfCell",
+            parent=body_style,
+            fontSize=7.2,
+            leading=8.5,
+        )
+        header_cell_style = ParagraphStyle(
+            "PortalPdfHeaderCell",
+            parent=cell_style,
+            fontName=bold_font,
+            textColor=colors.white,
+        )
+        summary_label_style = ParagraphStyle(
+            "PortalPdfSummaryLabel",
+            parent=cell_style,
+            fontName=bold_font,
+            textColor=dark_blue,
+        )
+
+        def safe_text(value: Any) -> str:
+            return escape(str(value))
+
+        def cell(value: Any, style: ParagraphStyle = cell_style) -> Paragraph:
+            return Paragraph(safe_text(value), style)
+
+        def number(value: Any, decimals: int = 2) -> str:
+            try:
+                return f"{float(value):,.{decimals}f}"
+            except (TypeError, ValueError):
+                return str(value)
+
+        def styled_table(
+            rows: list[list[Any]],
+            widths: list[float],
+            header_rows: int = 1,
+        ) -> Table:
+            table = Table(rows, colWidths=widths, repeatRows=header_rows, hAlign="LEFT")
+            commands: list[tuple[Any, ...]] = [
+                ("BACKGROUND", (0, 0), (-1, header_rows - 1), panel_blue),
+                ("TEXTCOLOR", (0, 0), (-1, header_rows - 1), colors.white),
+                ("GRID", (0, 0), (-1, -1), 0.35, border_blue),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                ("TOPPADDING", (0, 0), (-1, -1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+            ]
+            for row_index in range(header_rows, len(rows)):
+                if (row_index - header_rows) % 2 == 0:
+                    commands.append(("BACKGROUND", (0, row_index), (-1, row_index), light_gray))
+            table.setStyle(TableStyle(commands))
+            return table
+
+        summary_rows = [
+            [cell(t("optimization_selected_part"), summary_label_style), cell(f"{part_number} - {part_description}")],
+            [cell(t("optimization_method_used"), summary_label_style), cell(method_label)],
+            [cell(t("optimization_recommended_supplier"), summary_label_style), cell(recommended_supplier)],
+            [cell(t("country"), summary_label_style), cell(recommended_row.get("Country", "-"))],
+            [cell(t("optimization_final_score"), summary_label_style), cell(number(recommended_final_score))],
+            [cell(t("annual_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Annual Cost', 0), 0)}")],
+            [cell(t("optimization_quality_score"), summary_label_style), cell(number(recommended_row.get("Quality", 0)))],
+            [cell(t("optimization_delivery_score"), summary_label_style), cell(number(recommended_row.get("Delivery", 0)))],
+            [cell(t("optimization_osa_score"), summary_label_style), cell(number(recommended_row.get("OSA Score", 0), 1))],
+            [cell(t("optimization_report_generated_at"), summary_label_style), cell(generated_at)],
+        ]
+
+        ranking_headers = [
+            t("column_rank"),
+            t("supplier_column_name"),
+            t("country"),
+            t("optimization_final_score"),
+            t("annual_cost"),
+            t("optimization_quality_score"),
+            t("optimization_delivery_score"),
+            t("optimization_osa_score"),
+        ]
+        ranking_rows: list[list[Any]] = [[cell(header, header_cell_style) for header in ranking_headers]]
+        ranking_source = report_data.sort_values(["Rank", "Final Score"], ascending=[True, False])
+        for _, row in ranking_source.iterrows():
+            ranking_rows.append(
+                [
+                    cell(number(row.get("Rank", ""), 0)),
+                    cell(row.get("Supplier", "")),
+                    cell(row.get("Country", "")),
+                    cell(number(row.get("Final Score", ""))),
+                    cell(f"EUR {number(row.get('Annual Cost', 0), 0)}"),
+                    cell(number(row.get("Quality", ""))),
+                    cell(number(row.get("Delivery", ""))),
+                    cell(number(row.get("OSA Score", ""), 1)),
+                ]
+            )
+
+        performance_headers = [
+            t("supplier_column_name"),
+            t("defect_rate"),
+            t("warranty_claims"),
+            t("incoming_acceptance_rate"),
+            t("process_capability_cpk"),
+            t("cart_days"),
+            t("on_time_delivery"),
+            t("lead_time_days"),
+            t("delivery_accuracy"),
+        ]
+        performance_rows: list[list[Any]] = [[cell(header, header_cell_style) for header in performance_headers]]
+        for _, row in ranking_source.iterrows():
+            performance_rows.append(
+                [
+                    cell(row.get("Supplier", "")),
+                    cell(number(row.get("Defect Rate", ""))),
+                    cell(number(row.get("Warranty Claims", ""), 0)),
+                    cell(number(row.get("Incoming Acceptance Rate", ""))),
+                    cell(number(row.get("Process Capability", ""))),
+                    cell(number(row.get("Corrective Action Response Time", ""))),
+                    cell(number(row.get("On-Time Delivery", ""))),
+                    cell(number(row.get("Lead Time", ""))),
+                    cell(number(row.get("Delivery Accuracy", ""))),
+                ]
+            )
+
+        document_buffer = io.BytesIO()
+        document = SimpleDocTemplate(
+            document_buffer,
+            pagesize=page_size,
+            leftMargin=14 * mm,
+            rightMargin=14 * mm,
+            topMargin=16 * mm,
+            bottomMargin=14 * mm,
+            title=t("optimization_title"),
+            author="Mercedes-Benz Türk Supplier Selection Portal",
+        )
+
+        def draw_page(canvas: Any, doc: Any) -> None:
+            canvas.saveState()
+            width, height = page_size
+            canvas.setFillColor(dark_blue)
+            canvas.rect(0, height - 10 * mm, width, 10 * mm, fill=1, stroke=0)
+            canvas.setFillColor(colors.white)
+            canvas.setFont(bold_font, 8)
+            canvas.drawString(doc.leftMargin, height - 6.5 * mm, "Mercedes-Benz Türk")
+            canvas.setFillColor(text_gray)
+            canvas.setFont(regular_font, 7)
+            canvas.drawRightString(width - doc.rightMargin, 7 * mm, f"Page {canvas.getPageNumber()}")
+            canvas.restoreState()
+
+        story = [
+            Paragraph(safe_text(t("optimization_title")), title_style),
+            Paragraph(safe_text(t("optimization_description")), subtitle_style),
+            Paragraph(safe_text(t("optimization_decision_summary")), section_style),
+            Table(
+                summary_rows,
+                colWidths=[58 * mm, 112 * mm],
+                hAlign="LEFT",
+                style=TableStyle(
+                    [
+                        ("BACKGROUND", (0, 0), (-1, -1), colors.white),
+                        ("GRID", (0, 0), (-1, -1), 0.35, border_blue),
+                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+                        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+                        ("TOPPADDING", (0, 0), (-1, -1), 5),
+                        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                    ]
+                ),
+            ),
+            Spacer(1, 7 * mm),
+            Paragraph(safe_text(t("optimization_osa_gate_note")), body_style),
+            Paragraph(safe_text(t("optimization_three_criteria_note")), body_style),
+            Paragraph(safe_text(t("optimization_supplier_ranking")), section_style),
+            styled_table(
+                ranking_rows,
+                [12 * mm, 42 * mm, 25 * mm, 25 * mm, 32 * mm, 25 * mm, 25 * mm, 22 * mm],
+            ),
+            PageBreak(),
+            Paragraph(safe_text(t("optimization_quality_score") + " / " + t("optimization_delivery_score")), section_style),
+            styled_table(
+                performance_rows,
+                [40 * mm, 22 * mm, 22 * mm, 30 * mm, 27 * mm, 22 * mm, 24 * mm, 22 * mm, 27 * mm],
+            ),
+        ]
+        document.build(story, onFirstPage=draw_page, onLaterPages=draw_page)
+        return document_buffer.getvalue()
+
     default_data = build_default_dataset()
     part_lookup = part_catalogue.set_index("Part Number").to_dict("index")
 
