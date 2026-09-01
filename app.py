@@ -343,8 +343,10 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_invalid_numeric_columns": "These optimization fields contain blank or non-numeric values: {columns}",
         "optimization_finite_numeric": "Optimization input values must be finite.",
         "optimization_invalid_capacity": "Capacity values must be non-negative and finite.",
+        "optimization_missing_annual_volume": "Annual Volume could not be inferred for these uploaded parts: {parts}. Add an Annual Volume column or provide a matching Part Description.",
         "optimization_upload_error": "The uploaded dataset could not be prepared: {error}",
         "optimization_capacity_assumption": "Capacity was not supplied, so Annual Volume is used as a conservative allocation capacity. Capacity is a constraint only, not an optimization criterion.",
+        "optimization_part_match_fallback": "No exact Part Number match was found. Supplier rows were matched using Part Description.",
         "optimization_gate_title": "Qualified Supplier Filter · Gatekeeper Rule",
         "optimization_osa_threshold": "OSA Threshold",
         "optimization_use_only_qualified": "☑ Use Only Qualified Suppliers",
@@ -367,6 +369,7 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_topsis_normalization": "The existing TOPSIS backend applies Euclidean normalization and ideal/anti-ideal ranking.",
         "optimization_targets_title": "Target Values",
         "optimization_target_cost": "Target Cost (€)",
+        "optimization_target_cost_unit": "Target Cost uses the same annual-cost units as the uploaded supplier dataset.",
         "optimization_target_quality": "Target Quality Score",
         "optimization_target_delivery": "Target Delivery Score",
         "optimization_preemptive_title": "Priority Ordering",
@@ -785,8 +788,10 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_invalid_numeric_columns": "Şu optimizasyon alanlarında boş veya sayısal olmayan değerler var: {columns}",
         "optimization_finite_numeric": "Optimizasyon girdi değerleri sonlu olmalıdır.",
         "optimization_invalid_capacity": "Capacity değerleri negatif olamaz ve sonlu olmalıdır.",
+        "optimization_missing_annual_volume": "Yüklenen şu parçalar için Annual Volume belirlenemedi: {parts}. Annual Volume sütunu ekleyin veya eşleşen bir Part Description sağlayın.",
         "optimization_upload_error": "Yüklenen veri kümesi hazırlanamadı: {error}",
         "optimization_capacity_assumption": "Capacity verilmediği için muhafazakâr dağıtım kapasitesi olarak Annual Volume kullanılıyor. Capacity yalnızca kısıttır, optimizasyon kriteri değildir.",
+        "optimization_part_match_fallback": "Tam bir Part Number eşleşmesi bulunamadı. Tedarikçi satırları Part Description kullanılarak eşleştirildi.",
         "optimization_gate_title": "Nitelikli Tedarikçi Filtresi · Kapı Kuralı",
         "optimization_osa_threshold": "OSA Eşiği",
         "optimization_use_only_qualified": "☑ Yalnızca Nitelikli Tedarikçileri Kullan",
@@ -809,6 +814,7 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_topsis_normalization": "Mevcut TOPSIS arka ucu Öklid normalizasyonu ve ideal/ideal olmayan çözüm sıralamasını uygular.",
         "optimization_targets_title": "Hedef Değerler",
         "optimization_target_cost": "Hedef Maliyet (€)",
+        "optimization_target_cost_unit": "Hedef Maliyet, yüklenen tedarikçi veri kümesiyle aynı yıllık maliyet birimini kullanır.",
         "optimization_target_quality": "Hedef Kalite Puanı",
         "optimization_target_delivery": "Hedef Teslimat Puanı",
         "optimization_preemptive_title": "Öncelik Sıralaması",
@@ -1227,8 +1233,10 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_invalid_numeric_columns": "Diese Optimierungsfelder enthalten leere oder nicht numerische Werte: {columns}",
         "optimization_finite_numeric": "Optimierungseingaben müssen endlich sein.",
         "optimization_invalid_capacity": "Capacity-Werte müssen nicht negativ und endlich sein.",
+        "optimization_missing_annual_volume": "Annual Volume konnte für diese hochgeladenen Teile nicht ermittelt werden: {parts}. Fügen Sie eine Annual-Volume-Spalte hinzu oder geben Sie eine passende Part Description an.",
         "optimization_upload_error": "Der hochgeladene Datensatz konnte nicht vorbereitet werden: {error}",
         "optimization_capacity_assumption": "Ohne Capacity wird Annual Volume als konservative Verteilungskapazität verwendet. Capacity ist nur eine Nebenbedingung, kein Optimierungskriterium.",
+        "optimization_part_match_fallback": "Keine exakte Part-Number-Übereinstimmung gefunden. Die Lieferantenzeilen wurden über Part Description zugeordnet.",
         "optimization_gate_title": "Filter qualifizierter Lieferanten · Gatekeeper-Regel",
         "optimization_osa_threshold": "OSA-Schwelle",
         "optimization_use_only_qualified": "☑ Nur qualifizierte Lieferanten verwenden",
@@ -1251,6 +1259,7 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_topsis_normalization": "Das bestehende TOPSIS-Backend verwendet euklidische Normalisierung sowie Ideal-/Anti-Ideal-Ranking.",
         "optimization_targets_title": "Zielwerte",
         "optimization_target_cost": "Zielkosten (€)",
+        "optimization_target_cost_unit": "Die Zielkosten verwenden dieselbe jährliche Kosteneinheit wie der hochgeladene Lieferantendatensatz.",
         "optimization_target_quality": "Zielqualitätsscore",
         "optimization_target_delivery": "Ziellieferscore",
         "optimization_preemptive_title": "Prioritätenfolge",
@@ -4438,6 +4447,8 @@ def supplier_optimization_page() -> None:
         aliases = {
             "partnumber": "Part Number",
             "part": "Part Number",
+            "partdescription": "Part Description",
+            "description": "Part Description",
             "supplier": "Supplier",
             "suppliername": "Supplier",
             "vendor": "Supplier",
@@ -4450,10 +4461,12 @@ def supplier_optimization_page() -> None:
             "processcapability": "Process Capability",
             "processcapabilitycpk": "Process Capability",
             "correctiveactionresponsetime": "Corrective Action Response Time",
+            "correctiveactionresponsetimedays": "Corrective Action Response Time",
             "correctiveactionresponsetimecartdays": "Corrective Action Response Time",
             "cartdays": "Corrective Action Response Time",
             "ontimedelivery": "On-Time Delivery",
             "leadtime": "Lead Time",
+            "leadtimedays": "Lead Time",
             "deliveryaccuracy": "Delivery Accuracy",
             "osascore": "OSA Score",
             "country": "Country",
@@ -4488,16 +4501,33 @@ def supplier_optimization_page() -> None:
         if not np.isfinite(data[numeric_columns].to_numpy()).all():
             raise ValueError(t("optimization_finite_numeric"))
 
-        part_volume_map = dict(zip(part_catalogue["Part Number"], part_catalogue["Annual Volume"]))
-        if "Annual Volume" not in data.columns:
-            data["Annual Volume"] = data["Part Number"].map(part_volume_map).fillna(
-                float(part_catalogue.iloc[0]["Annual Volume"])
+        part_volume_map = dict(
+            zip(
+                part_catalogue["Part Number"].astype(str).str.strip(),
+                part_catalogue["Annual Volume"],
             )
+        )
+        part_description_volume_map = dict(
+            zip(
+                part_catalogue["Part Description"].astype(str).str.strip().str.casefold(),
+                part_catalogue["Annual Volume"],
+            )
+        )
+        mapped_volume = data["Part Number"].map(part_volume_map)
+        if "Part Description" in data.columns:
+            description_volume = data["Part Description"].astype(str).str.strip().str.casefold().map(
+                part_description_volume_map
+            )
+            mapped_volume = mapped_volume.fillna(description_volume)
+
+        if "Annual Volume" not in data.columns:
+            data["Annual Volume"] = mapped_volume
         else:
             data["Annual Volume"] = pd.to_numeric(data["Annual Volume"], errors="coerce")
-            data["Annual Volume"] = data["Annual Volume"].fillna(
-                data["Part Number"].map(part_volume_map)
-            )
+            data["Annual Volume"] = data["Annual Volume"].fillna(mapped_volume)
+        if data["Annual Volume"].isna().any():
+            missing_parts = data.loc[data["Annual Volume"].isna(), "Part Number"].drop_duplicates().tolist()
+            raise ValueError(t("optimization_missing_annual_volume", parts=missing_parts))
         capacity_assumed = "Capacity" not in data.columns
         if capacity_assumed:
             data["Capacity"] = data["Annual Volume"]
@@ -4783,6 +4813,14 @@ def supplier_optimization_page() -> None:
             unsafe_allow_html=True,
         )
         selected_part_data = source_data[source_data["Part Number"] == selected_part_number].copy()
+        matched_by_description = False
+        if selected_part_data.empty and "Part Description" in source_data.columns:
+            selected_description_key = str(selected_part["Part Description"]).strip().casefold()
+            description_keys = source_data["Part Description"].astype(str).str.strip().str.casefold()
+            selected_part_data = source_data[description_keys == selected_description_key].copy()
+            matched_by_description = not selected_part_data.empty
+        if matched_by_description:
+            st.info(t("optimization_part_match_fallback"))
         if selected_part_data.empty:
             st.warning(t("optimization_no_part_data"))
             st.stop()
@@ -4848,7 +4886,9 @@ def supplier_optimization_page() -> None:
             unsafe_allow_html=True,
         )
         method_weights = {"Cost": 0.40, "Quality": 0.35, "Delivery": 0.25}
-        target_cost = float(selected_part["Budget (€)"])
+        # Goal Programming compares this target against the Annual Cost criterion,
+        # so initialize it in the same units as the selected supplier dataset.
+        target_cost = float(evaluated_data["Annual Cost"].min())
         target_quality = 85.0
         target_delivery = 90.0
         priority_order = ["Cost", "Quality", "Delivery"]
@@ -4931,6 +4971,7 @@ def supplier_optimization_page() -> None:
                         step=1.0,
                         key="optimization_target_delivery_input",
                     )
+                st.caption(t("optimization_target_cost_unit"))
 
             else:
                 st.markdown(f"##### {t('optimization_preemptive_title')}")
