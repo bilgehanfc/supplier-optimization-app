@@ -137,7 +137,7 @@ def prepare_numeric_data(edited_data: pd.DataFrame) -> tuple[pd.DataFrame, pd.Da
 def display_ranking(result: pd.DataFrame, score_title: str) -> None:
     """Display ranking table and a basic score chart."""
     st.subheader("Ranking results")
-    st.dataframe(result, use_container_width=True)
+    st.dataframe(result, width="stretch")
     st.caption(f"Higher {score_title} values indicate a better supplier.")
     chart_data = result.sort_values("score")[["score"]]
     st.bar_chart(chart_data, horizontal=True)
@@ -151,7 +151,7 @@ def display_allocation(
     """Display allocation results, metrics, and a basic allocation chart."""
     st.subheader(title)
     visible_allocation = allocation[allocation["allocation_units"] > 1e-8]
-    st.dataframe(visible_allocation, use_container_width=True)
+    st.dataframe(visible_allocation, width="stretch")
     st.bar_chart(
         allocation.sort_values("allocation_units")[["allocation_units"]],
         horizontal=True,
@@ -206,7 +206,7 @@ def run_analysis(
         )
         display_allocation(allocation, metrics, "Preemptive allocation")
         st.subheader("Lexicographic priority results")
-        st.dataframe(pd.Series(stages, name="value").to_frame(), use_container_width=True)
+        st.dataframe(pd.Series(stages, name="value").to_frame(), width="stretch")
         return
 
     allocation, metrics = goal_programming(
@@ -219,148 +219,244 @@ def run_analysis(
     display_allocation(allocation, metrics, "Goal-programming allocation")
 
 
-st.title("Supplier Selection Optimization")
-st.caption("Compare supplier rankings or calculate a capacity-constrained allocation.")
-
-uploaded_file = st.file_uploader(
-    "Upload supplier data",
-    type=["csv", "xlsx", "xls"],
-    help="Use columns such as Supplier, Cost, Quality, Delivery, and Capacity.",
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-image: radial-gradient(
+                circle at 8% 0%,
+                color-mix(in srgb, currentColor 5%, transparent) 0,
+                transparent 32rem
+            );
+        }
+        .block-container {
+            max-width: 1440px;
+            padding-top: calc(5rem + env(safe-area-inset-top));
+            padding-bottom: 4rem;
+        }
+        .st-key-analysis_workspace {
+            background: color-mix(in srgb, currentColor 3%, transparent);
+            border-color: color-mix(in srgb, currentColor 18%, transparent) !important;
+            box-shadow: 0 14px 38px rgba(0, 0, 0, 0.12);
+        }
+        .workspace-title {
+            color: inherit !important;
+            font-size: clamp(2rem, 4vw, 3.25rem);
+            font-weight: 730;
+            letter-spacing: -0.045em;
+            line-height: 1.04;
+            margin: 0;
+        }
+        .workspace-copy {
+            color: inherit;
+            font-size: 1.05rem;
+            margin: 0.75rem 0 0;
+            max-width: 48rem;
+            opacity: 0.72;
+        }
+        .section-label {
+            color: inherit;
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 0.1rem;
+            opacity: 0.92;
+        }
+        .st-key-analysis_workspace [data-testid="stBaseButton-primary"] {
+            background-color: #c0392b;
+            border-color: #c0392b;
+            color: #ffffff;
+        }
+        .st-key-analysis_workspace [data-testid="stBaseButton-primary"]:hover {
+            background-color: #a93226;
+            border-color: #a93226;
+        }
+        .st-key-analysis_workspace [data-testid="stBaseButton-primary"]:focus-visible {
+            outline: 3px solid currentColor;
+            outline-offset: 2px;
+        }
+        @media (max-width: 768px) {
+            .block-container {
+                padding-top: calc(4.5rem + env(safe-area-inset-top));
+            }
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
-if uploaded_file is None:
-    source_data = default_supplier_data()
-    st.info("No file uploaded. The dummy supplier dataset is shown below.")
-else:
-    try:
-        source_data = read_supplier_file(uploaded_file.name, uploaded_file.getvalue())
-        st.success(f"Loaded {uploaded_file.name}")
-    except Exception as error:  # Streamlit should show a friendly input error.
-        st.error(f"Could not read the uploaded file: {error}")
-        st.stop()
-
-st.subheader("Supplier data")
-edited_data = st.data_editor(
-    source_data,
-    num_rows="dynamic",
-    use_container_width=True,
-    hide_index=True,
-    key=f"supplier_data_editor_{uploaded_file.name if uploaded_file else 'dummy'}",
-)
-
-try:
-    criteria_data, numeric_data = prepare_numeric_data(edited_data)
-except ValueError as error:
-    st.error(str(error))
-    st.stop()
-
-criteria_columns = list(criteria_data.columns)
-if not criteria_columns:
-    st.error("At least one criterion is required; Capacity is not a criterion.")
-    st.stop()
-
-with st.sidebar:
-    st.header("Analysis setup")
-    method = st.selectbox(
-        "Optimization method",
-        ["TOPSIS", "Weighted Sum", "Preemptive Optimization", "Goal Programming"],
+with st.container(border=True, key="analysis_workspace"):
+    st.markdown(
+        '<h1 class="workspace-title">Supplier selection analysis</h1>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<p class="workspace-copy">Compare supplier performance, tune the decision model, '
+        'and calculate the best allocation from one unified workspace.</p>',
+        unsafe_allow_html=True,
     )
 
-    st.subheader("Criterion configuration")
-    st.caption("Weights are normalized automatically. Choose benefit or cost direction.")
-    weights: dict[str, float] = {}
-    impacts: dict[str, str] = {}
-    default_weight = 1.0 / len(criteria_columns)
-    for criterion in criteria_columns:
-        weight_column, impact_column = st.columns([1, 1])
-        with weight_column:
-            weights[criterion] = st.number_input(
-                f"{criterion} weight",
-                min_value=0.0,
-                value=default_weight,
-                step=0.05,
-                key=f"weight_{criterion}",
-            )
-        with impact_column:
-            impacts[criterion] = st.selectbox(
-                f"{criterion} direction",
-                ["benefit", "cost"],
-                index=0 if inferred_impact(criterion) == "benefit" else 1,
-                key=f"impact_{criterion}",
-            )
+    st.divider()
+    method_column, upload_column = st.columns([1.15, 1], gap="large")
+    with method_column:
+        st.markdown('<div class="section-label">1 · Choose an analysis</div>', unsafe_allow_html=True)
+        method = st.selectbox(
+            "Optimization method",
+            ["TOPSIS", "Weighted Sum", "Preemptive Optimization", "Goal Programming"],
+            label_visibility="collapsed",
+        )
+        st.caption(
+            "Rank individual suppliers or optimize a capacity-constrained split award."
+        )
 
-    settings: dict[str, Any] = {
-        "capacity_column": "Capacity" if "Capacity" in numeric_data.columns else None,
-        "demand_units": 100.0,
-        "quality_target": 85.0,
-        "delivery_target": 8.0,
-        "cost_target": 105.0,
-        "goal_weights": {"quality": 0.45, "delivery": 0.35, "cost": 0.20},
-    }
-
-    if method in {"Preemptive Optimization", "Goal Programming"}:
-        st.subheader("Allocation settings")
-        if settings["capacity_column"] is None:
-            st.warning("Add a Capacity column to use this method.")
+    with upload_column:
+        st.markdown('<div class="section-label">2 · Add supplier data</div>', unsafe_allow_html=True)
+        uploaded_file = st.file_uploader(
+            "Upload supplier data",
+            type=["csv", "xlsx", "xls"],
+            help="Use columns such as Supplier, Cost, Quality, Delivery, and Capacity.",
+            label_visibility="collapsed",
+        )
+        if uploaded_file is None:
+            st.caption("Using the sample dataset · Upload CSV or Excel to replace it")
         else:
-            settings["demand_units"] = st.number_input(
-                "Demand units",
-                min_value=0.0001,
-                value=100.0,
-                step=10.0,
-            )
-            settings["cost_column"] = st.selectbox(
-                "Cost criterion",
-                criteria_columns,
-                index=criteria_columns.index(default_column(criteria_columns, ("Cost", "Price"))),
-            )
-            settings["quality_column"] = st.selectbox(
-                "Quality criterion",
-                criteria_columns,
-                index=criteria_columns.index(default_column(criteria_columns, ("Quality",))),
-            )
-            settings["delivery_column"] = st.selectbox(
-                "Delivery criterion",
-                criteria_columns,
-                index=criteria_columns.index(
-                    default_column(criteria_columns, ("Delivery", "Lead Time", "Time"))
-                ),
-            )
+            st.caption(f"Using {uploaded_file.name}")
 
-            quality_values = numeric_data[settings["quality_column"]]
-            delivery_values = numeric_data[settings["delivery_column"]]
-            cost_values = numeric_data[settings["cost_column"]]
-            settings["quality_target"] = st.number_input(
-                "Minimum quality target",
-                value=float(quality_values.max()),
-                step=1.0,
-            )
-            settings["delivery_target"] = st.number_input(
-                "Maximum delivery target",
-                value=float(delivery_values.min()),
-                step=1.0,
-            )
+    if uploaded_file is None:
+        source_data = default_supplier_data()
+    else:
+        try:
+            source_data = read_supplier_file(uploaded_file.name, uploaded_file.getvalue())
+        except Exception as error:  # Streamlit should show a friendly input error.
+            st.error(f"Could not read the uploaded file: {error}")
+            st.stop()
 
-            if method == "Goal Programming":
-                settings["cost_target"] = st.number_input(
-                    "Maximum cost target",
-                    value=float(cost_values.median()),
+    st.divider()
+    configuration_column, data_column = st.columns([1, 1.7], gap="large")
+
+    with data_column:
+        st.markdown('<div class="section-label">Supplier data</div>', unsafe_allow_html=True)
+        st.caption("Review or edit the values that will be used in this analysis.")
+        edited_data = st.data_editor(
+            source_data,
+            num_rows="dynamic",
+            width="stretch",
+            hide_index=True,
+            key=f"supplier_data_editor_{uploaded_file.name if uploaded_file else 'sample'}",
+        )
+
+    try:
+        criteria_data, numeric_data = prepare_numeric_data(edited_data)
+    except ValueError as error:
+        st.error(str(error))
+        st.stop()
+
+    criteria_columns = list(criteria_data.columns)
+    if not criteria_columns:
+        st.error("At least one criterion is required; Capacity is not a criterion.")
+        st.stop()
+
+    with configuration_column:
+        st.markdown('<div class="section-label">Model configuration</div>', unsafe_allow_html=True)
+        st.caption("Weights normalize automatically. Set whether higher or lower is better.")
+        weights: dict[str, float] = {}
+        impacts: dict[str, str] = {}
+        default_weight = 1.0 / len(criteria_columns)
+        for criterion in criteria_columns:
+            weight_column, impact_column = st.columns([1, 1])
+            with weight_column:
+                weights[criterion] = st.number_input(
+                    f"{criterion} weight",
+                    min_value=0.0,
+                    value=default_weight,
+                    step=0.05,
+                    key=f"weight_{criterion}",
+                )
+            with impact_column:
+                impacts[criterion] = st.selectbox(
+                    f"{criterion} direction",
+                    ["benefit", "cost"],
+                    index=0 if inferred_impact(criterion) == "benefit" else 1,
+                    key=f"impact_{criterion}",
+                )
+
+        settings: dict[str, Any] = {
+            "capacity_column": "Capacity" if "Capacity" in numeric_data.columns else None,
+            "demand_units": 100.0,
+            "quality_target": 85.0,
+            "delivery_target": 8.0,
+            "cost_target": 105.0,
+            "goal_weights": {"quality": 0.45, "delivery": 0.35, "cost": 0.20},
+        }
+
+        if method in {"Preemptive Optimization", "Goal Programming"}:
+            st.markdown("##### Allocation settings")
+            if settings["capacity_column"] is None:
+                st.warning("Add a Capacity column to use this method.")
+            else:
+                settings["demand_units"] = st.number_input(
+                    "Demand units",
+                    min_value=0.0001,
+                    value=100.0,
+                    step=10.0,
+                )
+                settings["cost_column"] = st.selectbox(
+                    "Cost criterion",
+                    criteria_columns,
+                    index=criteria_columns.index(
+                        default_column(criteria_columns, ("Cost", "Price"))
+                    ),
+                )
+                settings["quality_column"] = st.selectbox(
+                    "Quality criterion",
+                    criteria_columns,
+                    index=criteria_columns.index(default_column(criteria_columns, ("Quality",))),
+                )
+                settings["delivery_column"] = st.selectbox(
+                    "Delivery criterion",
+                    criteria_columns,
+                    index=criteria_columns.index(
+                        default_column(criteria_columns, ("Delivery", "Lead Time", "Time"))
+                    ),
+                )
+
+                quality_values = numeric_data[settings["quality_column"]]
+                delivery_values = numeric_data[settings["delivery_column"]]
+                cost_values = numeric_data[settings["cost_column"]]
+                settings["quality_target"] = st.number_input(
+                    "Minimum quality target",
+                    value=float(quality_values.max()),
                     step=1.0,
                 )
-                st.caption("Goal-programming weights")
-                settings["goal_weights"] = {
-                    "quality": st.number_input(
-                        "Quality goal weight", min_value=0.0, value=0.45, step=0.05
-                    ),
-                    "delivery": st.number_input(
-                        "Delivery goal weight", min_value=0.0, value=0.35, step=0.05
-                    ),
-                    "cost": st.number_input(
-                        "Cost goal weight", min_value=0.0, value=0.20, step=0.05
-                    ),
-                }
+                settings["delivery_target"] = st.number_input(
+                    "Maximum delivery target",
+                    value=float(delivery_values.min()),
+                    step=1.0,
+                )
 
-    run_button = st.button("Run analysis", type="primary", use_container_width=True)
+                if method == "Goal Programming":
+                    settings["cost_target"] = st.number_input(
+                        "Maximum cost target",
+                        value=float(cost_values.median()),
+                        step=1.0,
+                    )
+                    st.caption("Goal-programming weights")
+                    settings["goal_weights"] = {
+                        "quality": st.number_input(
+                            "Quality goal weight", min_value=0.0, value=0.45, step=0.05
+                        ),
+                        "delivery": st.number_input(
+                            "Delivery goal weight", min_value=0.0, value=0.35, step=0.05
+                        ),
+                        "cost": st.number_input(
+                            "Cost goal weight", min_value=0.0, value=0.20, step=0.05
+                        ),
+                    }
+
+        run_button = st.button(
+            "Run analysis",
+            type="primary",
+            width="stretch",
+        )
 
 if run_button:
     try:
@@ -376,4 +472,4 @@ if run_button:
     except Exception as error:  # Surface solver and validation errors in the UI.
         st.error(f"Analysis could not be completed: {error}")
 else:
-    st.info("Configure the method in the sidebar, then click Run analysis.")
+    st.caption("Choose a method, review the model configuration, then run the analysis.")
