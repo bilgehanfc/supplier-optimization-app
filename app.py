@@ -5135,7 +5135,8 @@ def supplier_optimization_page() -> None:
         recommended_supplier = result_payload["recommended_supplier"]
         recommended_row = result_payload["recommended_row"]
         method_name = result_payload["method"]
-        result_part = part_lookup[result_payload["selected_part"]]
+        result_part_number = result_payload["selected_part"]
+        result_part = part_lookup[result_part_number]
 
         st.markdown(
             f'<div class="optimization-section-heading">{t("optimization_step_results")}</div>',
@@ -5221,7 +5222,7 @@ def supplier_optimization_page() -> None:
             render_info_grid(
                 [
                     (t("optimization_method_used"), t(method_keys[method_name])),
-                    (t("optimization_selected_part"), f"{result_part['Part Number']} · {result_part['Part Description']}"),
+                    (t("optimization_selected_part"), f"{result_part_number} · {result_part['Part Description']}"),
                     (t("optimization_evaluated_suppliers"), str(result_payload["candidate_count"])),
                     (t("optimization_qualified_suppliers"), str(result_payload["qualified_count"])),
                     (t("optimization_cost_score"), f"€{float(recommended_row['Annual Cost']):,.0f}"),
@@ -5241,9 +5242,11 @@ def supplier_optimization_page() -> None:
             on="Supplier",
             how="left",
         )
-        report_data.insert(0, "Part Number", result_part["Part Number"])
-        report_data.insert(1, "Part Description", result_part["Part Description"])
-        report_data.insert(2, "Method", t(method_keys[method_name]))
+        # Assign report metadata instead of inserting it: uploaded datasets may
+        # already contain Part Number and/or Part Description columns.
+        report_data["Part Number"] = result_part_number
+        report_data["Part Description"] = result_part["Part Description"]
+        report_data["Method"] = t(method_keys[method_name])
         generated_at = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
         report_data["Generated At"] = generated_at
         report_columns = [
@@ -5306,7 +5309,7 @@ def supplier_optimization_page() -> None:
                                 ],
                                 "Value": [
                                     t(method_keys[method_name]),
-                                    f"{result_part['Part Number']} · {result_part['Part Description']}",
+                                    f"{result_part_number} · {result_part['Part Description']}",
                                     recommended_supplier,
                                     f"{result_payload['recommended_final_score']:.2f}",
                                     generated_at,
