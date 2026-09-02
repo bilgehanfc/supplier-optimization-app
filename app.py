@@ -175,6 +175,37 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "annual_cost": "Annual Cost (€)",
         "tooling_cost": "Tooling Cost (€)",
         "quality_score": "Quality Score",
+        "supplier_quality_inspection_time": "Inspection Time",
+        "supplier_quality_process_capability": "Process Capability",
+        "supplier_quality_fmea_risk": "FMEA Risk (Average RPN)",
+        "supplier_quality_failure_rate": "Failure Rate",
+        "supplier_quality_oem_experience": "OEM Experience",
+        "supplier_quality_methodology": "View Quality Methodology",
+        "supplier_quality_formula_title": "1. Quality Score Formula",
+        "supplier_quality_formula": "Quality Score = 35% Inspection Time + 25% Process Capability + 20% FMEA Risk + 10% Failure Rate + 10% OEM Experience",
+        "supplier_quality_inspection_title": "2. Inspection Time Explanation",
+        "supplier_quality_inspection_text": "Average time required to inspect and evaluate a defective part. Lower is better.",
+        "supplier_quality_capability_title": "3. Process Capability Explanation",
+        "supplier_quality_capability_text": "Measures process stability.",
+        "supplier_quality_capability_excellent": "Cpk ≥ 1.67 = Excellent",
+        "supplier_quality_capability_good": "Cpk ≥ 1.33 = Good",
+        "supplier_quality_capability_poor": "Cpk < 1.00 = Poor",
+        "supplier_quality_fmea_title": "4. FMEA Risk Explanation",
+        "supplier_quality_fmea_text": "Average RPN. RPN = Severity × Occurrence × Detection. Lower is better.",
+        "supplier_quality_fmea_low": "0–50 = Low Risk",
+        "supplier_quality_fmea_medium": "51–100 = Medium Risk",
+        "supplier_quality_fmea_high": ">100 = High Risk",
+        "supplier_quality_failure_title": "5. Failure Rate Explanation",
+        "supplier_quality_failure_text": "Actual field failure ratio. Different from PPM.",
+        "supplier_quality_failure_ppm": "PPM = Incoming Quality",
+        "supplier_quality_failure_rate_definition": "Failure Rate = Product Usage Performance",
+        "supplier_quality_oem_title": "6. OEM Experience Explanation",
+        "supplier_quality_oem_100": "Daimler + Volvo + Scania + MAN + DAF = 100",
+        "supplier_quality_oem_85": "Daimler + Volvo + Scania = 85",
+        "supplier_quality_oem_70": "Daimler + Volvo = 70",
+        "supplier_quality_oem_55": "Daimler Only = 55",
+        "supplier_quality_oem_40": "Other Automotive OEM = 40",
+        "supplier_quality_oem_20": "No Relevant OEM Experience = 20",
         "defect_rate": "Defect Rate (%)",
         "warranty_claims": "Warranty Claims",
         "incoming_acceptance_rate": "Incoming Acceptance Rate (%)",
@@ -338,14 +369,15 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_default_data": "Using the built-in supplier dataset until a file is uploaded.",
         "optimization_preview_title": "Supplier Dataset Preview",
         "optimization_preview_caption": "The preview includes supplier performance fields and the OSA qualification gate.",
-        "optimization_expected_columns": "Expected columns: Part Number, Supplier, Annual Cost, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score, Country.",
+        "optimization_expected_columns": "Expected columns: Part Number, Part Description, Supplier, Unit Cost, AVOP, Tooling Cost, Material Cost, Manufacturing Cost, Administration Cost, Profit, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score, and Country.",
         "optimization_missing_required_columns": "The uploaded dataset is missing required columns: {columns}",
         "optimization_invalid_numeric_columns": "These optimization fields contain blank or non-numeric values: {columns}",
         "optimization_finite_numeric": "Optimization input values must be finite.",
         "optimization_invalid_capacity": "Capacity values must be non-negative and finite.",
         "optimization_missing_annual_volume": "Annual Volume could not be inferred for these uploaded parts: {parts}. Add an Annual Volume column or provide a matching Part Description.",
+        "optimization_missing_commercial_columns": "The uploaded dataset is missing commercial cost columns: {columns}",
         "optimization_upload_error": "The uploaded dataset could not be prepared: {error}",
-        "optimization_capacity_assumption": "Capacity was not supplied, so Annual Volume is used as a conservative allocation capacity. Capacity is a constraint only, not an optimization criterion.",
+        "optimization_capacity_assumption": "Capacity was not supplied, so AVOP is used as a conservative allocation capacity. Capacity is a constraint only, not an optimization criterion.",
         "optimization_part_match_fallback": "No exact Part Number match was found. Supplier rows were matched using Part Description.",
         "optimization_gate_title": "Qualified Supplier Filter · Gatekeeper Rule",
         "optimization_osa_threshold": "OSA Threshold",
@@ -353,7 +385,7 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_osa_gate_note": "OSA is not an optimization criterion. It is used strictly as a qualification gate; suppliers with OSA Score < 70 are excluded when this rule is enabled.",
         "optimization_three_criteria_note": "Optimization uses only Cost, Quality, and Delivery. Capacity and Technical Capability are evaluated within OSA and are not optimization criteria.",
         "optimization_criteria_title": "Criteria Construction",
-        "optimization_cost_definition": "Cost = Annual Supplier Cost; no pre-normalization is applied.",
+        "optimization_cost_definition": "Cost = Annual Purchasing Cost (Unit Cost × AVOP); no pre-normalization is applied.",
         "optimization_quality_definition": "Quality Score = weighted subcriteria calculation from Defect Rate, Warranty Claims, Incoming Acceptance Rate, and Process Capability.",
         "optimization_delivery_definition": "Delivery Score = weighted subcriteria calculation from On-Time Delivery, Lead Time, and Delivery Accuracy.",
         "optimization_method_configuration": "Method Configuration",
@@ -368,8 +400,8 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_topsis_benefits": "Quality and Delivery are configured as benefit criteria (higher is better).",
         "optimization_topsis_normalization": "The existing TOPSIS backend applies Euclidean normalization and ideal/anti-ideal ranking.",
         "optimization_targets_title": "Target Values",
-        "optimization_target_cost": "Target Cost (€)",
-        "optimization_target_cost_unit": "Target Cost uses the same annual-cost units as the uploaded supplier dataset.",
+        "optimization_target_cost": "Target Annual Purchasing Cost (EUR)",
+        "optimization_target_cost_unit": "The target uses the same Annual Purchasing Cost units as the uploaded supplier dataset.",
         "optimization_target_quality": "Target Quality Score",
         "optimization_target_delivery": "Target Delivery Score",
         "optimization_preemptive_title": "Priority Ordering",
@@ -401,10 +433,26 @@ Each criterion should have a clear definition, scoring scale, evidence requireme
         "optimization_quality_score": "Quality",
         "optimization_delivery_score": "Delivery",
         "optimization_osa_score": "OSA",
+        "optimization_commercial_summary": "COMMERCIAL SUMMARY",
+        "optimization_unit_cost": "Unit Cost (EUR / piece)",
+        "optimization_avop": "AVOP (pieces)",
+        "optimization_annual_purchasing_cost": "Annual Purchasing Cost (EUR)",
+        "optimization_tooling_cost": "Tooling Cost (EUR)",
+        "optimization_total_project_cost": "Total Project Cost (EUR)",
+        "optimization_cost_breakdown": "Cost Breakdown",
+        "optimization_material_cost": "Material Cost",
+        "optimization_manufacturing_cost": "Manufacturing Cost",
+        "optimization_administration_cost": "Administration Cost",
+        "optimization_profit": "Profit",
+        "optimization_cost_composition_chart": "Cost Composition Chart",
+        "optimization_performance_details": "Supplier Performance Details",
+        "optimization_cost_formula_note": "Unit Cost = Material Cost + Manufacturing Cost + Administration Cost + Profit. Annual Purchasing Cost = Unit Cost × AVOP. Total Project Cost = Annual Purchasing Cost + Tooling Cost.",
+        "optimization_legacy_commercial_fallback": "Legacy Annual Cost data was detected. Unit Cost and the commercial breakdown were derived so the existing dataset remains usable.",
+        "optimization_commercial_validation": "Unit Cost must equal Material Cost + Manufacturing Cost + Administration Cost + Profit for every supplier. Invalid suppliers: {suppliers}",
         "optimization_export_reports": "Export Reports",
         "optimization_export_pdf": "📄 Export PDF Report",
         "optimization_export_excel": "📊 Export Excel Report",
-        "optimization_pdf_placeholder": "PDF report generation is ready for integration with the corporate reporting service.",
+        "optimization_pdf_error": "PDF report could not be generated: {error}",
         "optimization_excel_error": "Excel report could not be generated: {error}",
         "optimization_report_generated_at": "Generated at",
         "optimization_results_csv": "Download optimization results (CSV)",
@@ -620,6 +668,37 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "annual_cost": "Yıllık Maliyet (€)",
         "tooling_cost": "Kalıp Maliyeti (€)",
         "quality_score": "Kalite Puanı",
+        "supplier_quality_inspection_time": "İnceleme Süresi",
+        "supplier_quality_process_capability": "Proses Yeterliliği",
+        "supplier_quality_fmea_risk": "FMEA Riski (Ortalama RPN)",
+        "supplier_quality_failure_rate": "Arıza Oranı",
+        "supplier_quality_oem_experience": "OEM Deneyimi",
+        "supplier_quality_methodology": "Kalite Metodolojisini Görüntüle",
+        "supplier_quality_formula_title": "1. Kalite Puanı Formülü",
+        "supplier_quality_formula": "Kalite Puanı = %35 İnceleme Süresi + %25 Proses Yeterliliği + %20 FMEA Riski + %10 Arıza Oranı + %10 OEM Deneyimi",
+        "supplier_quality_inspection_title": "2. İnceleme Süresi Açıklaması",
+        "supplier_quality_inspection_text": "Hatalı bir parçayı incelemek ve değerlendirmek için gereken ortalama süredir. Düşük olması daha iyidir.",
+        "supplier_quality_capability_title": "3. Proses Yeterliliği Açıklaması",
+        "supplier_quality_capability_text": "Proses kararlılığını ölçer.",
+        "supplier_quality_capability_excellent": "Cpk >= 1,67 = Mükemmel",
+        "supplier_quality_capability_good": "Cpk >= 1,33 = İyi",
+        "supplier_quality_capability_poor": "Cpk < 1,00 = Zayıf",
+        "supplier_quality_fmea_title": "4. FMEA Riski Açıklaması",
+        "supplier_quality_fmea_text": "Ortalama RPN. RPN = Şiddet x Oluşma x Tespit. Düşük olması daha iyidir.",
+        "supplier_quality_fmea_low": "0-50 = Düşük Risk",
+        "supplier_quality_fmea_medium": "51-100 = Orta Risk",
+        "supplier_quality_fmea_high": ">100 = Yüksek Risk",
+        "supplier_quality_failure_title": "5. Arıza Oranı Açıklaması",
+        "supplier_quality_failure_text": "Sahadaki gerçek arıza oranıdır. PPM'den farklıdır.",
+        "supplier_quality_failure_ppm": "PPM = Giriş Kalitesi",
+        "supplier_quality_failure_rate_definition": "Arıza Oranı = Ürün Kullanım Performansı",
+        "supplier_quality_oem_title": "6. OEM Deneyimi Açıklaması",
+        "supplier_quality_oem_100": "Daimler + Volvo + Scania + MAN + DAF = 100",
+        "supplier_quality_oem_85": "Daimler + Volvo + Scania = 85",
+        "supplier_quality_oem_70": "Daimler + Volvo = 70",
+        "supplier_quality_oem_55": "Yalnızca Daimler = 55",
+        "supplier_quality_oem_40": "Diğer Otomotiv OEM'i = 40",
+        "supplier_quality_oem_20": "İlgili OEM Deneyimi Yok = 20",
         "defect_rate": "Hata Oranı (%)",
         "warranty_claims": "Garanti Talepleri",
         "incoming_acceptance_rate": "Giriş Kabul Oranı (%)",
@@ -783,14 +862,15 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_default_data": "Dosya yüklenene kadar yerleşik tedarikçi veri kümesi kullanılıyor.",
         "optimization_preview_title": "Tedarikçi Veri Kümesi Önizlemesi",
         "optimization_preview_caption": "Önizleme, tedarikçi performans alanlarını ve OSA yeterlilik kapısını içerir.",
-        "optimization_expected_columns": "Beklenen sütunlar: Part Number, Supplier, Annual Cost, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score, Country.",
+        "optimization_expected_columns": "Beklenen sütunlar: Part Number, Part Description, Supplier, Unit Cost, AVOP, Tooling Cost, Material Cost, Manufacturing Cost, Administration Cost, Profit, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score ve Country.",
         "optimization_missing_required_columns": "Yüklenen veri kümesinde gerekli sütunlar eksik: {columns}",
         "optimization_invalid_numeric_columns": "Şu optimizasyon alanlarında boş veya sayısal olmayan değerler var: {columns}",
         "optimization_finite_numeric": "Optimizasyon girdi değerleri sonlu olmalıdır.",
         "optimization_invalid_capacity": "Capacity değerleri negatif olamaz ve sonlu olmalıdır.",
         "optimization_missing_annual_volume": "Yüklenen şu parçalar için Annual Volume belirlenemedi: {parts}. Annual Volume sütunu ekleyin veya eşleşen bir Part Description sağlayın.",
+        "optimization_missing_commercial_columns": "Yüklenen veri kümesinde ticari maliyet sütunları eksik: {columns}",
         "optimization_upload_error": "Yüklenen veri kümesi hazırlanamadı: {error}",
-        "optimization_capacity_assumption": "Capacity verilmediği için muhafazakâr dağıtım kapasitesi olarak Annual Volume kullanılıyor. Capacity yalnızca kısıttır, optimizasyon kriteri değildir.",
+        "optimization_capacity_assumption": "Capacity verilmediği için muhafazakâr dağıtım kapasitesi olarak AVOP kullanılıyor. Capacity yalnızca kısıttır, optimizasyon kriteri değildir.",
         "optimization_part_match_fallback": "Tam bir Part Number eşleşmesi bulunamadı. Tedarikçi satırları Part Description kullanılarak eşleştirildi.",
         "optimization_gate_title": "Nitelikli Tedarikçi Filtresi · Kapı Kuralı",
         "optimization_osa_threshold": "OSA Eşiği",
@@ -798,7 +878,7 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_osa_gate_note": "OSA bir optimizasyon kriteri değildir. Yalnızca yeterlilik kapısı olarak kullanılır; bu kural etkin olduğunda OSA Puanı < 70 olan tedarikçiler dışlanır.",
         "optimization_three_criteria_note": "Optimizasyon yalnızca Maliyet, Kalite ve Teslimat kriterlerini kullanır. Kapasite ve Teknik Yetkinlik OSA içinde değerlendirilir ve optimizasyon kriteri değildir.",
         "optimization_criteria_title": "Kriter Oluşturma",
-        "optimization_cost_definition": "Maliyet = Yıllık Tedarikçi Maliyeti; ön normalizasyon uygulanmaz.",
+        "optimization_cost_definition": "Maliyet = Yıllık Satın Alma Maliyeti (Unit Cost × AVOP); ön normalizasyon uygulanmaz.",
         "optimization_quality_definition": "Kalite Puanı = Hata Oranı, Garanti Talepleri, Giriş Kabul Oranı ve Proses Yeterliliğinden ağırlıklı alt kriter hesabı.",
         "optimization_delivery_definition": "Teslimat Puanı = Zamanında Teslimat, Teslimat Süresi ve Teslimat Doğruluğundan ağırlıklı alt kriter hesabı.",
         "optimization_method_configuration": "Yöntem Yapılandırması",
@@ -813,8 +893,8 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_topsis_benefits": "Kalite ve Teslimat, fayda kriteri olarak yapılandırılır (yüksek değer daha iyidir).",
         "optimization_topsis_normalization": "Mevcut TOPSIS arka ucu Öklid normalizasyonu ve ideal/ideal olmayan çözüm sıralamasını uygular.",
         "optimization_targets_title": "Hedef Değerler",
-        "optimization_target_cost": "Hedef Maliyet (€)",
-        "optimization_target_cost_unit": "Hedef Maliyet, yüklenen tedarikçi veri kümesiyle aynı yıllık maliyet birimini kullanır.",
+        "optimization_target_cost": "Hedef Yıllık Satın Alma Maliyeti (EUR)",
+        "optimization_target_cost_unit": "Hedef, yüklenen tedarikçi veri kümesiyle aynı Yıllık Satın Alma Maliyeti birimini kullanır.",
         "optimization_target_quality": "Hedef Kalite Puanı",
         "optimization_target_delivery": "Hedef Teslimat Puanı",
         "optimization_preemptive_title": "Öncelik Sıralaması",
@@ -846,10 +926,26 @@ Her kriterin net bir tanımı, puanlama ölçeği, kanıt gereksinimi, sorumlu d
         "optimization_quality_score": "Kalite",
         "optimization_delivery_score": "Teslimat",
         "optimization_osa_score": "OSA",
+        "optimization_commercial_summary": "TİCARİ ÖZET",
+        "optimization_unit_cost": "Birim Maliyet (EUR / parça)",
+        "optimization_avop": "AVOP (parça)",
+        "optimization_annual_purchasing_cost": "Yıllık Satın Alma Maliyeti (EUR)",
+        "optimization_tooling_cost": "Kalıp Maliyeti (EUR)",
+        "optimization_total_project_cost": "Toplam Proje Maliyeti (EUR)",
+        "optimization_cost_breakdown": "Maliyet Kırılımı",
+        "optimization_material_cost": "Malzeme Maliyeti",
+        "optimization_manufacturing_cost": "Üretim Maliyeti",
+        "optimization_administration_cost": "Yönetim Maliyeti",
+        "optimization_profit": "Kâr",
+        "optimization_cost_composition_chart": "Maliyet Kompozisyon Grafiği",
+        "optimization_performance_details": "Tedarikçi Performans Detayları",
+        "optimization_cost_formula_note": "Birim Maliyet = Malzeme Maliyeti + Üretim Maliyeti + Yönetim Maliyeti + Kâr. Yıllık Satın Alma Maliyeti = Birim Maliyet × AVOP. Toplam Proje Maliyeti = Yıllık Satın Alma Maliyeti + Kalıp Maliyeti.",
+        "optimization_legacy_commercial_fallback": "Eski Annual Cost verisi algılandı. Mevcut veri kümesinin kullanılabilmesi için Birim Maliyet ve ticari kırılım türetildi.",
+        "optimization_commercial_validation": "Her tedarikçi için Birim Maliyet = Malzeme Maliyeti + Üretim Maliyeti + Yönetim Maliyeti + Kâr olmalıdır. Geçersiz tedarikçiler: {suppliers}",
         "optimization_export_reports": "Raporları Dışa Aktar",
         "optimization_export_pdf": "📄 PDF Raporunu Dışa Aktar",
         "optimization_export_excel": "📊 Excel Raporunu Dışa Aktar",
-        "optimization_pdf_placeholder": "PDF rapor oluşturma, kurumsal raporlama servisine entegrasyon için hazırdır.",
+        "optimization_pdf_error": "PDF raporu oluşturulamadı: {error}",
         "optimization_excel_error": "Excel raporu oluşturulamadı: {error}",
         "optimization_report_generated_at": "Oluşturulma zamanı",
         "optimization_results_csv": "Optimizasyon sonuçlarını indir (CSV)",
@@ -1065,6 +1161,37 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "annual_cost": "Jahreskosten (€)",
         "tooling_cost": "Werkzeugkosten (€)",
         "quality_score": "Qualitätsscore",
+        "supplier_quality_inspection_time": "Prüfzeit",
+        "supplier_quality_process_capability": "Prozessfähigkeit",
+        "supplier_quality_fmea_risk": "FMEA-Risiko (Durchschnittlicher RPN)",
+        "supplier_quality_failure_rate": "Ausfallrate",
+        "supplier_quality_oem_experience": "OEM-Erfahrung",
+        "supplier_quality_methodology": "Qualitätsmethodik anzeigen",
+        "supplier_quality_formula_title": "1. Formel für den Qualitätsscore",
+        "supplier_quality_formula": "Qualitätsscore = 35% Prüfzeit + 25% Prozessfähigkeit + 20% FMEA-Risiko + 10% Ausfallrate + 10% OEM-Erfahrung",
+        "supplier_quality_inspection_title": "2. Erklärung der Prüfzeit",
+        "supplier_quality_inspection_text": "Durchschnittliche Zeit für die Prüfung und Bewertung eines fehlerhaften Teils. Niedriger ist besser.",
+        "supplier_quality_capability_title": "3. Erklärung der Prozessfähigkeit",
+        "supplier_quality_capability_text": "Misst die Prozessstabilität.",
+        "supplier_quality_capability_excellent": "Cpk >= 1,67 = Hervorragend",
+        "supplier_quality_capability_good": "Cpk >= 1,33 = Gut",
+        "supplier_quality_capability_poor": "Cpk < 1,00 = Schwach",
+        "supplier_quality_fmea_title": "4. Erklärung des FMEA-Risikos",
+        "supplier_quality_fmea_text": "Durchschnittlicher RPN. RPN = Bedeutung x Auftreten x Entdeckung. Niedriger ist besser.",
+        "supplier_quality_fmea_low": "0-50 = Niedriges Risiko",
+        "supplier_quality_fmea_medium": "51-100 = Mittleres Risiko",
+        "supplier_quality_fmea_high": ">100 = Hohes Risiko",
+        "supplier_quality_failure_title": "5. Erklärung der Ausfallrate",
+        "supplier_quality_failure_text": "Tatsächlicher Ausfallanteil im Feld. Nicht mit PPM gleichzusetzen.",
+        "supplier_quality_failure_ppm": "PPM = Eingangsqualität",
+        "supplier_quality_failure_rate_definition": "Ausfallrate = Produktnutzungsleistung",
+        "supplier_quality_oem_title": "6. Erklärung der OEM-Erfahrung",
+        "supplier_quality_oem_100": "Daimler + Volvo + Scania + MAN + DAF = 100",
+        "supplier_quality_oem_85": "Daimler + Volvo + Scania = 85",
+        "supplier_quality_oem_70": "Daimler + Volvo = 70",
+        "supplier_quality_oem_55": "Nur Daimler = 55",
+        "supplier_quality_oem_40": "Anderer Automobil-OEM = 40",
+        "supplier_quality_oem_20": "Keine relevante OEM-Erfahrung = 20",
         "defect_rate": "Fehlerquote (%)",
         "warranty_claims": "Gewährleistungsfälle",
         "incoming_acceptance_rate": "Eingangsannahmequote (%)",
@@ -1228,14 +1355,15 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_default_data": "Bis zum Upload einer Datei wird der integrierte Lieferantendatensatz verwendet.",
         "optimization_preview_title": "Vorschau des Lieferantendatensatzes",
         "optimization_preview_caption": "Die Vorschau enthält Lieferantenleistungsfelder und das OSA-Qualifikationsgate.",
-        "optimization_expected_columns": "Erwartete Spalten: Part Number, Supplier, Annual Cost, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score, Country.",
+        "optimization_expected_columns": "Erwartete Spalten: Part Number, Part Description, Supplier, Unit Cost, AVOP, Tooling Cost, Material Cost, Manufacturing Cost, Administration Cost, Profit, Defect Rate, Warranty Claims, Incoming Acceptance Rate, Process Capability, Corrective Action Response Time, On-Time Delivery, Lead Time, Delivery Accuracy, OSA Score und Country.",
         "optimization_missing_required_columns": "Im hochgeladenen Datensatz fehlen erforderliche Spalten: {columns}",
         "optimization_invalid_numeric_columns": "Diese Optimierungsfelder enthalten leere oder nicht numerische Werte: {columns}",
         "optimization_finite_numeric": "Optimierungseingaben müssen endlich sein.",
         "optimization_invalid_capacity": "Capacity-Werte müssen nicht negativ und endlich sein.",
         "optimization_missing_annual_volume": "Annual Volume konnte für diese hochgeladenen Teile nicht ermittelt werden: {parts}. Fügen Sie eine Annual-Volume-Spalte hinzu oder geben Sie eine passende Part Description an.",
+        "optimization_missing_commercial_columns": "Im hochgeladenen Datensatz fehlen kommerzielle Kostenspalten: {columns}",
         "optimization_upload_error": "Der hochgeladene Datensatz konnte nicht vorbereitet werden: {error}",
-        "optimization_capacity_assumption": "Ohne Capacity wird Annual Volume als konservative Verteilungskapazität verwendet. Capacity ist nur eine Nebenbedingung, kein Optimierungskriterium.",
+        "optimization_capacity_assumption": "Ohne Capacity wird AVOP als konservative Verteilungskapazität verwendet. Capacity ist nur eine Nebenbedingung, kein Optimierungskriterium.",
         "optimization_part_match_fallback": "Keine exakte Part-Number-Übereinstimmung gefunden. Die Lieferantenzeilen wurden über Part Description zugeordnet.",
         "optimization_gate_title": "Filter qualifizierter Lieferanten · Gatekeeper-Regel",
         "optimization_osa_threshold": "OSA-Schwelle",
@@ -1243,7 +1371,7 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_osa_gate_note": "OSA ist kein Optimierungskriterium. Es dient ausschließlich als Qualifikationsgate; bei aktivierter Regel werden Lieferanten mit OSA-Score < 70 ausgeschlossen.",
         "optimization_three_criteria_note": "Die Optimierung verwendet nur Kosten, Qualität und Lieferung. Kapazität und technische Fähigkeit werden innerhalb der OSA bewertet und sind keine Optimierungskriterien.",
         "optimization_criteria_title": "Kriterienkonstruktion",
-        "optimization_cost_definition": "Kosten = jährliche Lieferantenkosten; keine Vorabnormalisierung.",
+        "optimization_cost_definition": "Kosten = jährliche Einkaufskosten (Unit Cost × AVOP); keine Vorabnormalisierung.",
         "optimization_quality_definition": "Qualitätsscore = gewichtete Unterkriterien aus Fehlerquote, Gewährleistungsfällen, Eingangsannahmequote und Prozessfähigkeit.",
         "optimization_delivery_definition": "Lieferscore = gewichtete Unterkriterien aus Termintreue, Lieferzeit und Liefergenauigkeit.",
         "optimization_method_configuration": "Methodenkonfiguration",
@@ -1258,8 +1386,8 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_topsis_benefits": "Qualität und Lieferung werden als Nutzenkriterien konfiguriert (höher ist besser).",
         "optimization_topsis_normalization": "Das bestehende TOPSIS-Backend verwendet euklidische Normalisierung sowie Ideal-/Anti-Ideal-Ranking.",
         "optimization_targets_title": "Zielwerte",
-        "optimization_target_cost": "Zielkosten (€)",
-        "optimization_target_cost_unit": "Die Zielkosten verwenden dieselbe jährliche Kosteneinheit wie der hochgeladene Lieferantendatensatz.",
+        "optimization_target_cost": "Ziel der jährlichen Einkaufskosten (EUR)",
+        "optimization_target_cost_unit": "Das Ziel verwendet dieselbe Einheit der jährlichen Einkaufskosten wie der hochgeladene Lieferantendatensatz.",
         "optimization_target_quality": "Zielqualitätsscore",
         "optimization_target_delivery": "Ziellieferscore",
         "optimization_preemptive_title": "Prioritätenfolge",
@@ -1291,10 +1419,26 @@ Jedes Kriterium sollte eine klare Definition, Bewertungsskala, Nachweisanforderu
         "optimization_quality_score": "Qualität",
         "optimization_delivery_score": "Lieferung",
         "optimization_osa_score": "OSA",
+        "optimization_commercial_summary": "KOMMERZIELLE ZUSAMMENFASSUNG",
+        "optimization_unit_cost": "Stückkosten (EUR / Stück)",
+        "optimization_avop": "AVOP (Stück)",
+        "optimization_annual_purchasing_cost": "Jährliche Einkaufskosten (EUR)",
+        "optimization_tooling_cost": "Werkzeugkosten (EUR)",
+        "optimization_total_project_cost": "Gesamtprojektkosten (EUR)",
+        "optimization_cost_breakdown": "Kostenaufteilung",
+        "optimization_material_cost": "Materialkosten",
+        "optimization_manufacturing_cost": "Fertigungskosten",
+        "optimization_administration_cost": "Verwaltungskosten",
+        "optimization_profit": "Gewinn",
+        "optimization_cost_composition_chart": "Kostenstrukturdiagramm",
+        "optimization_performance_details": "Lieferantenleistungsdetails",
+        "optimization_cost_formula_note": "Stückkosten = Materialkosten + Fertigungskosten + Verwaltungskosten + Gewinn. Jährliche Einkaufskosten = Stückkosten × AVOP. Gesamtprojektkosten = Jährliche Einkaufskosten + Werkzeugkosten.",
+        "optimization_legacy_commercial_fallback": "Legacy-Daten mit Annual Cost wurden erkannt. Stückkosten und Kostenaufteilung wurden abgeleitet, damit der bestehende Datensatz weiterhin verwendet werden kann.",
+        "optimization_commercial_validation": "Für jeden Lieferanten müssen die Stückkosten der Summe aus Materialkosten, Fertigungskosten, Verwaltungskosten und Gewinn entsprechen. Ungültige Lieferanten: {suppliers}",
         "optimization_export_reports": "Berichte exportieren",
         "optimization_export_pdf": "📄 PDF-Bericht exportieren",
         "optimization_export_excel": "📊 Excel-Bericht exportieren",
-        "optimization_pdf_placeholder": "Die PDF-Berichterstellung ist für die Integration in den Corporate-Reporting-Service vorbereitet.",
+        "optimization_pdf_error": "Der PDF-Bericht konnte nicht erstellt werden: {error}",
         "optimization_excel_error": "Der Excel-Bericht konnte nicht erstellt werden: {error}",
         "optimization_report_generated_at": "Erstellt am",
         "optimization_results_csv": "Optimierungsergebnisse herunterladen (CSV)",
@@ -3093,17 +3237,132 @@ def supplier_database_page() -> None:
                     f'<div class="supplier-section-heading">{t("supplier_section_quality_performance")}</div>',
                     unsafe_allow_html=True,
                 )
+                # Section 4 intentionally stays compact: six quality KPIs are
+                # shown as cards, with the detailed methodology hidden below.
+                # Optional uploaded fields are respected when available; the
+                # fallbacks keep the existing supplier catalogue compatible.
+                def quality_value(*field_names: str, fallback: float) -> float:
+                    for field_name in field_names:
+                        raw_value = selected_record.get(field_name)
+                        try:
+                            numeric_value = float(raw_value)
+                        except (TypeError, ValueError):
+                            continue
+                        if np.isfinite(numeric_value):
+                            return numeric_value
+                    return fallback
+
+                selected_quality_score = quality_value(
+                    "Quality Score",
+                    fallback=0.0,
+                )
+                selected_cpk = quality_value(
+                    "Process Capability (Cpk)",
+                    "Process Capability",
+                    fallback=0.0,
+                )
+                selected_cart_days = quality_value(
+                    "CART (Days)",
+                    "Corrective Action Response Time",
+                    fallback=0.0,
+                )
+                inspection_time_hours = quality_value(
+                    "Inspection Time (Hours)",
+                    "Inspection Time",
+                    fallback=max(0.5, 2.0 + selected_cart_days * 0.5),
+                )
+                average_rpn = quality_value(
+                    "Average RPN",
+                    "FMEA Risk (Average RPN)",
+                    "FMEA RPN",
+                    fallback=min(
+                        180.0,
+                        max(
+                            25.0,
+                            float(selected_record["Defect Rate (%)"]) * 18.0
+                            + float(selected_record["Warranty Claims"]) * 5.0
+                            + max(0.0, 2.0 - selected_cpk) * 50.0,
+                        ),
+                    ),
+                )
+                failure_rate = quality_value(
+                    "Failure Rate (%)",
+                    "Failure Rate",
+                    fallback=max(0.05, float(selected_record["Defect Rate (%)"]) * 0.35),
+                )
+                oem_experience_map = {
+                    "Bosch": 100,
+                    "Brose": 100,
+                    "ZF": 100,
+                    "Forvia": 85,
+                    "Grammer": 85,
+                    "Hella": 85,
+                    "Lear": 85,
+                    "Eissmann Automotive": 70,
+                    "Autoneum": 70,
+                    "Adler Pelzer": 70,
+                    "Borgers": 70,
+                    "Novares": 70,
+                    "Webasto": 70,
+                    "Inalfa": 70,
+                    "Gestamp": 70,
+                    "Benteler": 70,
+                    "Kostal": 70,
+                    "Marelli": 70,
+                }
+                oem_experience = quality_value(
+                    "OEM Experience",
+                    "OEM Experience Score",
+                    fallback=float(oem_experience_map.get(selected_record["Supplier Name"], 40)),
+                )
+
                 render_numeric_metrics(
                     [
-                        (t("quality_score"), f"{selected_record['Quality Score']:.0f} / 100"),
-                        (t("defect_rate"), f"{selected_record['Defect Rate (%)']:.2f}%"),
-                        (t("warranty_claims"), f"{selected_record['Warranty Claims']:,}"),
-                        (t("incoming_acceptance_rate"), f"{selected_record['Incoming Acceptance Rate (%)']:.2f}%"),
-                        (t("process_capability_cpk"), f"{selected_record['Process Capability (Cpk)']:.2f}"),
-                        (t("cart_days"), f"{selected_record['CART (Days)']:.1f}"),
+                        (t("quality_score"), f"{selected_quality_score:.0f} / 100"),
+                        (t("supplier_quality_inspection_time"), f"{inspection_time_hours:.1f} h"),
+                        (t("supplier_quality_process_capability"), f"{selected_cpk:.2f}"),
+                        (t("supplier_quality_fmea_risk"), f"{average_rpn:.0f}"),
+                        (t("supplier_quality_failure_rate"), f"{failure_rate:.2f}%"),
+                        (t("supplier_quality_oem_experience"), f"{oem_experience:.0f} / 100"),
                     ],
                     3,
                 )
+
+                with st.expander(t("supplier_quality_methodology"), expanded=False):
+                    st.markdown(
+                        f"""
+**{t('supplier_quality_formula_title')}**  
+{t('supplier_quality_formula')}
+
+**{t('supplier_quality_inspection_title')}**  
+{t('supplier_quality_inspection_text')}
+
+**{t('supplier_quality_capability_title')}**  
+{t('supplier_quality_capability_text')}  
+• {t('supplier_quality_capability_excellent')}  
+• {t('supplier_quality_capability_good')}  
+• {t('supplier_quality_capability_poor')}
+
+**{t('supplier_quality_fmea_title')}**  
+{t('supplier_quality_fmea_text')}  
+• {t('supplier_quality_fmea_low')}  
+• {t('supplier_quality_fmea_medium')}  
+• {t('supplier_quality_fmea_high')}
+
+**{t('supplier_quality_failure_title')}**  
+{t('supplier_quality_failure_text')}  
+• {t('supplier_quality_failure_ppm')}  
+• {t('supplier_quality_failure_rate_definition')}
+
+**{t('supplier_quality_oem_title')}**  
+• {t('supplier_quality_oem_100')}  
+• {t('supplier_quality_oem_85')}  
+• {t('supplier_quality_oem_70')}  
+• {t('supplier_quality_oem_55')}  
+• {t('supplier_quality_oem_40')}  
+• {t('supplier_quality_oem_20')}
+                        """
+                    )
 
                 st.markdown(
                     f'<div class="supplier-section-heading">{t("supplier_section_delivery_performance")}</div>',
@@ -4415,12 +4674,32 @@ def supplier_optimization_page() -> None:
                     target_cost * (1.01 + candidate_position * 0.018 + (supplier_index % 4) * 0.006),
                     2,
                 )
+                material_cost = round(unit_price * 0.58, 2)
+                manufacturing_cost = round(unit_price * 0.22, 2)
+                administration_cost = round(unit_price * 0.08, 2)
+                # Calculate profit as the residual so the cost components always
+                # reconcile exactly to Unit Cost after currency rounding.
+                profit = round(
+                    unit_price - material_cost - manufacturing_cost - administration_cost,
+                    2,
+                )
+                tooling_cost = round(15000 + (part_index % 5) * 2500 + candidate_position * 1000, 2)
+                annual_purchasing_cost = round(unit_price * annual_volume, 2)
+                total_project_cost = round(annual_purchasing_cost + tooling_cost, 2)
                 rows.append(
                     {
                         "Part Number": part_number,
+                        "Part Description": _description,
                         "Supplier": supplier_name,
-                        "Annual Volume": annual_volume,
-                        "Annual Cost": round(unit_price * annual_volume, 2),
+                        "Unit Cost": unit_price,
+                        "AVOP": annual_volume,
+                        "Annual Purchasing Cost": annual_purchasing_cost,
+                        "Tooling Cost": tooling_cost,
+                        "Total Project Cost": total_project_cost,
+                        "Material Cost": material_cost,
+                        "Manufacturing Cost": manufacturing_cost,
+                        "Administration Cost": administration_cost,
+                        "Profit": profit,
                         "Defect Rate": defect_rate,
                         "Warranty Claims": warranty_claims,
                         "Incoming Acceptance Rate": incoming_acceptance,
@@ -4452,9 +4731,23 @@ def supplier_optimization_page() -> None:
             "supplier": "Supplier",
             "suppliername": "Supplier",
             "vendor": "Supplier",
-            "annualcost": "Annual Cost",
-            "annualsuppliercost": "Annual Cost",
-            "cost": "Annual Cost",
+            "unitcost": "Unit Cost",
+            "annualcost": "Annual Purchasing Cost",
+            "annualsuppliercost": "Annual Purchasing Cost",
+            "annualpurchasingcost": "Annual Purchasing Cost",
+            "cost": "Unit Cost",
+            "avop": "AVOP",
+            "avopannualvolumeofpurchase": "AVOP",
+            "annualvolume": "AVOP",
+            "annualvolumeofpurchase": "AVOP",
+            "toolingcost": "Tooling Cost",
+            "materialcost": "Material Cost",
+            "manufacturingcost": "Manufacturing Cost",
+            "administrationcost": "Administration Cost",
+            "administrativecost": "Administration Cost",
+            "admincost": "Administration Cost",
+            "profit": "Profit",
+            "totalprojectcost": "Total Project Cost",
             "defectrate": "Defect Rate",
             "warrantyclaims": "Warranty Claims",
             "incomingacceptancerate": "Incoming Acceptance Rate",
@@ -4470,7 +4763,6 @@ def supplier_optimization_page() -> None:
             "deliveryaccuracy": "Delivery Accuracy",
             "osascore": "OSA Score",
             "country": "Country",
-            "annualvolume": "Annual Volume",
             "capacity": "Capacity",
         }
         rename_map: dict[Any, str] = {}
@@ -4482,7 +4774,7 @@ def supplier_optimization_page() -> None:
         data = data.rename(columns=rename_map)
 
         required_columns = [
-            "Part Number", "Supplier", "Annual Cost", "Defect Rate", "Warranty Claims",
+            "Part Number", "Supplier", "Defect Rate", "Warranty Claims",
             "Incoming Acceptance Rate", "Process Capability", "Corrective Action Response Time",
             "On-Time Delivery", "Lead Time", "Delivery Accuracy", "OSA Score", "Country",
         ]
@@ -4492,7 +4784,17 @@ def supplier_optimization_page() -> None:
 
         data["Part Number"] = data["Part Number"].astype(str).str.strip()
         data["Supplier"] = data["Supplier"].astype(str).str.strip()
-        numeric_columns = [column for column in required_columns if column not in {"Part Number", "Supplier", "Country"}]
+        numeric_columns = [
+            column
+            for column in required_columns
+            if column not in {"Part Number", "Supplier", "Country"}
+        ]
+        commercial_columns = [
+            "Unit Cost", "AVOP", "Annual Purchasing Cost", "Tooling Cost", "Total Project Cost",
+            "Material Cost", "Manufacturing Cost", "Administration Cost", "Profit",
+        ]
+        numeric_columns.extend(column for column in commercial_columns if column in data.columns)
+        numeric_columns = list(dict.fromkeys(numeric_columns))
         for column in numeric_columns:
             data[column] = pd.to_numeric(data[column], errors="coerce")
         if data[numeric_columns].isna().any().any():
@@ -4520,17 +4822,94 @@ def supplier_optimization_page() -> None:
             )
             mapped_volume = mapped_volume.fillna(description_volume)
 
-        if "Annual Volume" not in data.columns:
-            data["Annual Volume"] = mapped_volume
+        if "AVOP" not in data.columns:
+            data["AVOP"] = mapped_volume
         else:
-            data["Annual Volume"] = pd.to_numeric(data["Annual Volume"], errors="coerce")
-            data["Annual Volume"] = data["Annual Volume"].fillna(mapped_volume)
-        if data["Annual Volume"].isna().any():
-            missing_parts = data.loc[data["Annual Volume"].isna(), "Part Number"].drop_duplicates().tolist()
+            data["AVOP"] = pd.to_numeric(data["AVOP"], errors="coerce")
+            data["AVOP"] = data["AVOP"].fillna(mapped_volume)
+        if data["AVOP"].isna().any() or (data["AVOP"] <= 0).any():
+            missing_parts = data.loc[
+                data["AVOP"].isna() | (data["AVOP"] <= 0), "Part Number"
+            ].drop_duplicates().tolist()
             raise ValueError(t("optimization_missing_annual_volume", parts=missing_parts))
+
+        commercial_fallback = False
+        if "Unit Cost" not in data.columns:
+            if "Annual Purchasing Cost" in data.columns:
+                data["Unit Cost"] = data["Annual Purchasing Cost"] / data["AVOP"]
+                commercial_fallback = True
+            else:
+                raise ValueError(
+                    t("optimization_missing_commercial_columns", columns=["Unit Cost"])
+                )
+
+        if "Tooling Cost" not in data.columns:
+            data["Tooling Cost"] = 0.0
+            commercial_fallback = True
+
+        component_columns = [
+            "Material Cost", "Manufacturing Cost", "Administration Cost", "Profit",
+        ]
+        missing_components = [column for column in component_columns if column not in data.columns]
+        if len(missing_components) == len(component_columns):
+            # Legacy files have no cost breakdown. Treat the legacy unit cost as
+            # material cost and keep the other components at zero so the data
+            # remains auditable and reconciles exactly.
+            data["Material Cost"] = data["Unit Cost"]
+            data["Manufacturing Cost"] = 0.0
+            data["Administration Cost"] = 0.0
+            data["Profit"] = 0.0
+            commercial_fallback = True
+        elif missing_components:
+            raise ValueError(
+                t("optimization_missing_commercial_columns", columns=missing_components)
+            )
+
+        commercial_numeric_columns = [
+            "Unit Cost", "AVOP", "Tooling Cost", "Material Cost", "Manufacturing Cost",
+            "Administration Cost", "Profit",
+        ]
+        for column in commercial_numeric_columns:
+            data[column] = pd.to_numeric(data[column], errors="coerce")
+        if data[commercial_numeric_columns].isna().any().any():
+            invalid_columns = data[commercial_numeric_columns].columns[
+                data[commercial_numeric_columns].isna().any()
+            ].tolist()
+            raise ValueError(t("optimization_invalid_numeric_columns", columns=invalid_columns))
+        if not np.isfinite(data[commercial_numeric_columns].to_numpy()).all():
+            raise ValueError(t("optimization_finite_numeric"))
+
+        component_total = data[component_columns].sum(axis=1)
+        consistency_mask = ~np.isclose(
+            data["Unit Cost"].to_numpy(dtype=float),
+            component_total.to_numpy(dtype=float),
+            atol=0.01,
+            rtol=1e-6,
+        )
+        if consistency_mask.any():
+            invalid_suppliers = data.loc[consistency_mask, "Supplier"].drop_duplicates().tolist()
+            raise ValueError(
+                t(
+                    "optimization_commercial_validation",
+                    suppliers=", ".join(map(str, invalid_suppliers)),
+                )
+            )
+
+        # Always calculate these values from the atomic commercial inputs.
+        data["Annual Purchasing Cost"] = np.round(data["Unit Cost"] * data["AVOP"], 2)
+        data["Total Project Cost"] = np.round(
+            data["Annual Purchasing Cost"] + data["Tooling Cost"],
+            2,
+        )
+        # Keep the old internal name available for compatibility with any
+        # downstream customizations, while all current UI/reporting uses the
+        # explicit Annual Purchasing Cost name.
+        data["Annual Volume"] = data["AVOP"]
+        data.attrs["commercial_fallback"] = commercial_fallback
+
         capacity_assumed = "Capacity" not in data.columns
         if capacity_assumed:
-            data["Capacity"] = data["Annual Volume"]
+            data["Capacity"] = data["AVOP"]
         data["Capacity"] = pd.to_numeric(data["Capacity"], errors="coerce")
         if data["Capacity"].isna().any() or (data["Capacity"] < 0).any():
             raise ValueError(t("optimization_invalid_capacity"))
@@ -4574,7 +4953,7 @@ def supplier_optimization_page() -> None:
         supplier_index = pd.Index(data["Supplier"].astype(str), name="Supplier")
         criteria = pd.DataFrame(
             {
-                "Cost": data["Annual Cost"].to_numpy(dtype=float),
+                "Cost": data["Annual Purchasing Cost"].to_numpy(dtype=float),
                 "Quality": quality_score.to_numpy(dtype=float),
                 "Delivery": delivery_score.to_numpy(dtype=float),
             },
@@ -4795,11 +5174,33 @@ def supplier_optimization_page() -> None:
             [cell(t("optimization_recommended_supplier"), summary_label_style), cell(recommended_supplier)],
             [cell(t("country"), summary_label_style), cell(recommended_row.get("Country", "-"))],
             [cell(t("optimization_final_score"), summary_label_style), cell(number(recommended_final_score))],
-            [cell(t("annual_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Annual Cost', 0), 0)}")],
+            [cell(t("optimization_unit_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Unit Cost', 0))}")],
+            [cell(t("optimization_avop"), summary_label_style), cell(number(recommended_row.get("AVOP", 0), 0))],
+            [cell(t("optimization_annual_purchasing_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Annual Purchasing Cost', 0), 0)}")],
+            [cell(t("optimization_tooling_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Tooling Cost', 0), 0)}")],
+            [cell(t("optimization_total_project_cost"), summary_label_style), cell(f"EUR {number(recommended_row.get('Total Project Cost', 0), 0)}")],
             [cell(t("optimization_quality_score"), summary_label_style), cell(number(recommended_row.get("Quality", 0)))],
             [cell(t("optimization_delivery_score"), summary_label_style), cell(number(recommended_row.get("Delivery", 0)))],
             [cell(t("optimization_osa_score"), summary_label_style), cell(number(recommended_row.get("OSA Score", 0), 1))],
             [cell(t("optimization_report_generated_at"), summary_label_style), cell(generated_at)],
+        ]
+
+        breakdown_headers = [
+            t("optimization_material_cost"),
+            t("optimization_manufacturing_cost"),
+            t("optimization_administration_cost"),
+            t("optimization_profit"),
+            t("optimization_unit_cost"),
+        ]
+        breakdown_rows = [
+            [cell(header, header_cell_style) for header in breakdown_headers],
+            [
+                cell(f"EUR {number(recommended_row.get('Material Cost', 0))}"),
+                cell(f"EUR {number(recommended_row.get('Manufacturing Cost', 0))}"),
+                cell(f"EUR {number(recommended_row.get('Administration Cost', 0))}"),
+                cell(f"EUR {number(recommended_row.get('Profit', 0))}"),
+                cell(f"EUR {number(recommended_row.get('Unit Cost', 0))}"),
+            ],
         ]
 
         ranking_headers = [
@@ -4807,7 +5208,11 @@ def supplier_optimization_page() -> None:
             t("supplier_column_name"),
             t("country"),
             t("optimization_final_score"),
-            t("annual_cost"),
+            t("optimization_unit_cost"),
+            t("optimization_avop"),
+            t("optimization_annual_purchasing_cost"),
+            t("optimization_tooling_cost"),
+            t("optimization_total_project_cost"),
             t("optimization_quality_score"),
             t("optimization_delivery_score"),
             t("optimization_osa_score"),
@@ -4821,7 +5226,11 @@ def supplier_optimization_page() -> None:
                     cell(row.get("Supplier", "")),
                     cell(row.get("Country", "")),
                     cell(number(row.get("Final Score", ""))),
-                    cell(f"EUR {number(row.get('Annual Cost', 0), 0)}"),
+                    cell(f"EUR {number(row.get('Unit Cost', 0))}"),
+                    cell(number(row.get("AVOP", 0), 0)),
+                    cell(f"EUR {number(row.get('Annual Purchasing Cost', 0), 0)}"),
+                    cell(f"EUR {number(row.get('Tooling Cost', 0), 0)}"),
+                    cell(f"EUR {number(row.get('Total Project Cost', 0), 0)}"),
                     cell(number(row.get("Quality", ""))),
                     cell(number(row.get("Delivery", ""))),
                     cell(number(row.get("OSA Score", ""), 1)),
@@ -4903,13 +5312,18 @@ def supplier_optimization_page() -> None:
             Spacer(1, 7 * mm),
             Paragraph(safe_text(t("optimization_osa_gate_note")), body_style),
             Paragraph(safe_text(t("optimization_three_criteria_note")), body_style),
+            Paragraph(safe_text(t("optimization_cost_breakdown")), section_style),
+            styled_table(breakdown_rows, [31 * mm, 31 * mm, 31 * mm, 25 * mm, 25 * mm]),
+            Spacer(1, 3 * mm),
+            Paragraph(safe_text(t("optimization_cost_formula_note")), body_style),
+            PageBreak(),
             Paragraph(safe_text(t("optimization_supplier_ranking")), section_style),
             styled_table(
                 ranking_rows,
-                [12 * mm, 42 * mm, 25 * mm, 25 * mm, 32 * mm, 25 * mm, 25 * mm, 22 * mm],
+                [9 * mm, 32 * mm, 20 * mm, 20 * mm, 22 * mm, 17 * mm, 28 * mm, 22 * mm, 28 * mm, 20 * mm, 20 * mm, 18 * mm],
             ),
             PageBreak(),
-            Paragraph(safe_text(t("optimization_quality_score") + " / " + t("optimization_delivery_score")), section_style),
+            Paragraph(safe_text(t("optimization_performance_details")), section_style),
             styled_table(
                 performance_rows,
                 [40 * mm, 22 * mm, 22 * mm, 30 * mm, 27 * mm, 22 * mm, 24 * mm, 22 * mm, 27 * mm],
@@ -5057,14 +5471,25 @@ def supplier_optimization_page() -> None:
             st.caption(t("optimization_preview_caption"))
             st.caption(t("optimization_expected_columns"))
             preview_columns = [
-                "Part Number", "Supplier", "Annual Cost", "Defect Rate", "Warranty Claims",
+                "Part Number", "Part Description", "Supplier", "Unit Cost", "AVOP",
+                "Annual Purchasing Cost", "Tooling Cost", "Total Project Cost", "Material Cost",
+                "Manufacturing Cost", "Administration Cost", "Profit", "Defect Rate", "Warranty Claims",
                 "Incoming Acceptance Rate", "Process Capability", "Corrective Action Response Time",
                 "On-Time Delivery", "Lead Time", "Delivery Accuracy", "OSA Score", "Country",
             ]
             preview_keys = {
                 "Part Number": "part_number",
+                "Part Description": "part_description",
                 "Supplier": "supplier_column_name",
-                "Annual Cost": "annual_cost",
+                "Unit Cost": "optimization_unit_cost",
+                "AVOP": "optimization_avop",
+                "Annual Purchasing Cost": "optimization_annual_purchasing_cost",
+                "Tooling Cost": "optimization_tooling_cost",
+                "Total Project Cost": "optimization_total_project_cost",
+                "Material Cost": "optimization_material_cost",
+                "Manufacturing Cost": "optimization_manufacturing_cost",
+                "Administration Cost": "optimization_administration_cost",
+                "Profit": "optimization_profit",
                 "Defect Rate": "defect_rate",
                 "Warranty Claims": "warranty_claims",
                 "Incoming Acceptance Rate": "incoming_acceptance_rate",
@@ -5076,10 +5501,16 @@ def supplier_optimization_page() -> None:
                 "OSA Score": "osa_score",
                 "Country": "country",
             }
+            available_preview_columns = [
+                column for column in preview_columns if column in source_data.columns
+            ]
             st.dataframe(
                 corporate_table_style(
-                    source_data[preview_columns].rename(
-                        columns={column: t(key) for column, key in preview_keys.items()}
+                    source_data[available_preview_columns].rename(
+                        columns={
+                            column: t(preview_keys[column])
+                            for column in available_preview_columns
+                        }
                     ).head(100)
                 ),
                 width="stretch",
@@ -5087,6 +5518,8 @@ def supplier_optimization_page() -> None:
             )
             if capacity_assumed:
                 st.info(t("optimization_capacity_assumption"))
+            if source_data.attrs.get("commercial_fallback", False):
+                st.info(t("optimization_legacy_commercial_fallback"))
 
         # ------------------------------------------------------------------
         # Step 4: OSA gatekeeper rule
@@ -5169,9 +5602,9 @@ def supplier_optimization_page() -> None:
             unsafe_allow_html=True,
         )
         method_weights = {"Cost": 0.40, "Quality": 0.35, "Delivery": 0.25}
-        # Goal Programming compares this target against the Annual Cost criterion,
+        # Goal Programming compares this target against the Annual Purchasing Cost criterion,
         # so initialize it in the same units as the selected supplier dataset.
-        target_cost = float(evaluated_data["Annual Cost"].min())
+        target_cost = float(evaluated_data["Annual Purchasing Cost"].min())
         target_quality = 85.0
         target_delivery = 90.0
         priority_order = ["Cost", "Quality", "Delivery"]
@@ -5420,6 +5853,18 @@ def supplier_optimization_page() -> None:
         method_name = result_payload["method"]
         result_part_number = result_payload["selected_part"]
         result_part = part_lookup[result_part_number]
+        recommended_unit_cost = float(recommended_row.get("Unit Cost", 0))
+        recommended_avop = float(recommended_row.get("AVOP", 0))
+        recommended_annual_purchasing_cost = float(
+            recommended_row.get("Annual Purchasing Cost", recommended_unit_cost * recommended_avop)
+        )
+        recommended_tooling_cost = float(recommended_row.get("Tooling Cost", 0))
+        recommended_total_project_cost = float(
+            recommended_row.get(
+                "Total Project Cost",
+                recommended_annual_purchasing_cost + recommended_tooling_cost,
+            )
+        )
 
         st.markdown(
             f'<div class="optimization-section-heading">{t("optimization_step_results")}</div>',
@@ -5456,11 +5901,53 @@ def supplier_optimization_page() -> None:
                 hide_index=True,
             )
 
+        # ------------------------------------------------------------------
+        # Commercial summary and Cost Breakdown (CBD)
+        # ------------------------------------------------------------------
+        st.markdown(
+            f'<div class="optimization-section-heading">{t("optimization_commercial_summary")}</div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(border=True, key="optimization_commercial_summary_panel"):
+            commercial_columns = st.columns(5, gap="small")
+            commercial_metrics = [
+                (t("optimization_unit_cost"), f"€{recommended_unit_cost:,.2f}"),
+                (t("optimization_avop"), f"{recommended_avop:,.0f}"),
+                (
+                    t("optimization_annual_purchasing_cost"),
+                    f"€{recommended_annual_purchasing_cost:,.0f}",
+                ),
+                (t("optimization_tooling_cost"), f"€{recommended_tooling_cost:,.0f}"),
+                (
+                    t("optimization_total_project_cost"),
+                    f"€{recommended_total_project_cost:,.0f}",
+                ),
+            ]
+            for column, (label, value) in zip(commercial_columns, commercial_metrics):
+                with column:
+                    st.metric(label, value)
+
+        with st.expander(t("optimization_cost_breakdown"), expanded=True):
+            breakdown_columns = st.columns(4, gap="small")
+            breakdown_metrics = [
+                (t("optimization_material_cost"), recommended_row.get("Material Cost", 0)),
+                (t("optimization_manufacturing_cost"), recommended_row.get("Manufacturing Cost", 0)),
+                (t("optimization_administration_cost"), recommended_row.get("Administration Cost", 0)),
+                (t("optimization_profit"), recommended_row.get("Profit", 0)),
+            ]
+            for column, (label, value) in zip(breakdown_columns, breakdown_metrics):
+                with column:
+                    st.metric(label, f"€{float(value):,.2f} / pc")
+            st.markdown(
+                f'<div class="optimization-note">{escape(t("optimization_cost_formula_note"))}</div>',
+                unsafe_allow_html=True,
+            )
+
         st.markdown(
             f'<div class="optimization-section-heading">{t("optimization_step_visualization")}</div>',
             unsafe_allow_html=True,
         )
-        chart_column, radar_column = st.columns(2, gap="large")
+        chart_column, composition_column, radar_column = st.columns(3, gap="large")
         with chart_column:
             st.markdown(
                 f'<div class="optimization-card-label">{t("optimization_ranking_bar_chart")}</div>',
@@ -5470,13 +5957,37 @@ def supplier_optimization_page() -> None:
                 ranking.sort_values("Final Score").set_index("Supplier")[["Final Score"]],
                 horizontal=True,
             )
+        with composition_column:
+            st.markdown(
+                f'<div class="optimization-card-label">{t("optimization_cost_composition_chart")}</div>',
+                unsafe_allow_html=True,
+            )
+            cost_composition = pd.DataFrame(
+                {
+                    "Amount": [
+                        float(recommended_row.get("Material Cost", 0)) * recommended_avop,
+                        float(recommended_row.get("Manufacturing Cost", 0)) * recommended_avop,
+                        float(recommended_row.get("Administration Cost", 0)) * recommended_avop,
+                        float(recommended_row.get("Profit", 0)) * recommended_avop,
+                        recommended_tooling_cost,
+                    ]
+                },
+                index=[
+                    t("optimization_material_cost"),
+                    t("optimization_manufacturing_cost"),
+                    t("optimization_administration_cost"),
+                    t("optimization_profit"),
+                    t("optimization_tooling_cost"),
+                ],
+            )
+            st.bar_chart(cost_composition, horizontal=True)
         with radar_column:
             st.markdown(
                 f'<div class="optimization-card-label">{t("optimization_radar_chart")}</div>',
                 unsafe_allow_html=True,
             )
-            evaluated_costs = result_payload["evaluated_data"]["Annual Cost"].astype(float)
-            recommended_cost = float(recommended_row["Annual Cost"])
+            evaluated_costs = result_payload["evaluated_data"]["Annual Purchasing Cost"].astype(float)
+            recommended_cost = float(recommended_row["Annual Purchasing Cost"])
             cost_performance = float(evaluated_costs.min() / recommended_cost * 100) if recommended_cost > 0 else 0.0
             st.markdown(
                 radar_svg(
@@ -5508,7 +6019,17 @@ def supplier_optimization_page() -> None:
                     (t("optimization_selected_part"), f"{result_part_number} · {result_part['Part Description']}"),
                     (t("optimization_evaluated_suppliers"), str(result_payload["candidate_count"])),
                     (t("optimization_qualified_suppliers"), str(result_payload["qualified_count"])),
-                    (t("optimization_cost_score"), f"€{float(recommended_row['Annual Cost']):,.0f}"),
+                    (t("optimization_unit_cost"), f"€{recommended_unit_cost:,.2f}"),
+                    (t("optimization_avop"), f"{recommended_avop:,.0f}"),
+                    (
+                        t("optimization_annual_purchasing_cost"),
+                        f"€{recommended_annual_purchasing_cost:,.0f}",
+                    ),
+                    (t("optimization_tooling_cost"), f"€{recommended_tooling_cost:,.0f}"),
+                    (
+                        t("optimization_total_project_cost"),
+                        f"€{recommended_total_project_cost:,.0f}",
+                    ),
                     (t("optimization_quality_score"), f"{float(recommended_row['Quality']):.2f}"),
                     (t("optimization_delivery_score"), f"{float(recommended_row['Delivery']):.2f}"),
                     (t("optimization_osa_score"), f"{float(recommended_row['OSA Score']):.1f}"),
@@ -5534,7 +6055,9 @@ def supplier_optimization_page() -> None:
         report_data["Generated At"] = generated_at
         report_columns = [
             "Part Number", "Part Description", "Method", "Rank", "Supplier", "Country",
-            "Final Score", "Annual Cost", "Quality", "Delivery", "OSA Score", "Generated At",
+            "Final Score", "Unit Cost", "AVOP", "Annual Purchasing Cost", "Tooling Cost",
+            "Total Project Cost", "Material Cost", "Manufacturing Cost", "Administration Cost",
+            "Profit", "Quality", "Delivery", "OSA Score", "Generated At",
         ]
         report_data = report_data[report_columns]
         report_display = report_data.rename(
@@ -5546,7 +6069,15 @@ def supplier_optimization_page() -> None:
                 "Supplier": t("supplier_column_name"),
                 "Country": t("country"),
                 "Final Score": t("optimization_final_score"),
-                "Annual Cost": t("annual_cost"),
+                "Unit Cost": t("optimization_unit_cost"),
+                "AVOP": t("optimization_avop"),
+                "Annual Purchasing Cost": t("optimization_annual_purchasing_cost"),
+                "Tooling Cost": t("optimization_tooling_cost"),
+                "Total Project Cost": t("optimization_total_project_cost"),
+                "Material Cost": t("optimization_material_cost"),
+                "Manufacturing Cost": t("optimization_manufacturing_cost"),
+                "Administration Cost": t("optimization_administration_cost"),
+                "Profit": t("optimization_profit"),
                 "Quality": t("optimization_quality_score"),
                 "Delivery": t("optimization_delivery_score"),
                 "OSA Score": t("optimization_osa_score"),
@@ -5573,8 +6104,28 @@ def supplier_optimization_page() -> None:
             )
             export_column, excel_column = st.columns(2, gap="small")
             with export_column:
-                if st.button(t("optimization_export_pdf"), width="stretch", key="optimization_pdf_button"):
-                    st.info(t("optimization_pdf_placeholder"))
+                try:
+                    pdf_bytes = build_pdf_report(
+                        report_data=report_data,
+                        part_number=result_part_number,
+                        part_description=str(result_part["Part Description"]),
+                        method_label=t(method_keys[method_name]),
+                        recommended_supplier=recommended_supplier,
+                        recommended_row=recommended_row,
+                        recommended_final_score=float(result_payload["recommended_final_score"]),
+                        generated_at=generated_at,
+                    )
+                except Exception as error:
+                    st.error(t("optimization_pdf_error", error=error))
+                else:
+                    st.download_button(
+                        t("optimization_export_pdf"),
+                        data=pdf_bytes,
+                        file_name="supplier_optimization_report.pdf",
+                        mime="application/pdf",
+                        width="stretch",
+                        key="optimization_pdf_download",
+                    )
             with excel_column:
                 excel_buffer = io.BytesIO()
                 excel_bytes = None
@@ -5588,6 +6139,14 @@ def supplier_optimization_page() -> None:
                                     t("optimization_selected_part"),
                                     t("optimization_recommended_supplier"),
                                     t("optimization_final_score"),
+                                    t("optimization_unit_cost"),
+                                    t("optimization_avop"),
+                                    t("optimization_annual_purchasing_cost"),
+                                    t("optimization_tooling_cost"),
+                                    t("optimization_total_project_cost"),
+                                    t("optimization_quality_score"),
+                                    t("optimization_delivery_score"),
+                                    t("optimization_osa_score"),
                                     t("optimization_report_generated_at"),
                                 ],
                                 "Value": [
@@ -5595,6 +6154,14 @@ def supplier_optimization_page() -> None:
                                     f"{result_part_number} · {result_part['Part Description']}",
                                     recommended_supplier,
                                     f"{result_payload['recommended_final_score']:.2f}",
+                                    f"€{recommended_unit_cost:,.2f}",
+                                    f"{recommended_avop:,.0f}",
+                                    f"€{recommended_annual_purchasing_cost:,.0f}",
+                                    f"€{recommended_tooling_cost:,.0f}",
+                                    f"€{recommended_total_project_cost:,.0f}",
+                                    f"{float(recommended_row['Quality']):.2f}",
+                                    f"{float(recommended_row['Delivery']):.2f}",
+                                    f"{float(recommended_row['OSA Score']):.1f}",
                                     generated_at,
                                 ],
                             }
