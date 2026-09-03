@@ -3306,93 +3306,121 @@ def supplier_database_page() -> None:
                     f'<div class="supplier-section-heading">{t("supplier_section_quality_performance")}</div>',
                     unsafe_allow_html=True,
                 )
-                # Section 4 intentionally stays compact: six quality KPIs are
-                # shown as cards, with the detailed methodology hidden below.
-                # Optional uploaded fields are respected when available; the
-                # fallbacks keep the existing supplier catalogue compatible.
-                def quality_value(*field_names: str, fallback: float) -> float:
+                # Section 4 is bound to the normalized dataset uploaded through
+                # Supplier Optimization. If no file is uploaded, every value
+                # remains N/A rather than falling back to generated data.
+                uploaded_dataset = st.session_state.get("supplier_optimization_source_data")
+                if not isinstance(uploaded_dataset, pd.DataFrame) or uploaded_dataset.empty:
+                    uploaded_dataset = None
+
+                def find_dataset_row(data: pd.DataFrame | None) -> pd.Series | None:
+                    if data is None or data.empty:
+                        return None
+
+                    supplier_column = next(
+                        (
+                            column
+                            for column in ("Supplier", "Supplier Name")
+                            if column in data.columns
+                        ),
+                        None,
+                    )
+                    if supplier_column is None:
+                        return None
+
+                    supplier_name = str(selected_record["Supplier Name"]).strip().casefold()
+                    matches = data[
+                        data[supplier_column].astype(str).str.strip().str.casefold()
+                        == supplier_name
+                    ]
+                    if matches.empty:
+                        return None
+
+                    # Prefer the selected part. Description matching supports
+                    # uploaded files whose part numbering differs from the UI catalogue.
+                    if "Part Number" in matches.columns:
+                        part_matches = matches[
+                            matches["Part Number"].astype(str).str.strip()
+                            == str(selected_record["Part Number"]).strip()
+                        ]
+                        if not part_matches.empty:
+                            matches = part_matches
+                    if "Part Description" in matches.columns:
+                        description_matches = matches[
+                            matches["Part Description"].astype(str).str.strip().str.casefold()
+                            == str(selected_record["Part Description"]).strip().casefold()
+                        ]
+                        if not description_matches.empty:
+                            matches = description_matches
+                    return matches.iloc[0]
+
+                supplier_row = find_dataset_row(uploaded_dataset)
+
+                def dataset_value(
+                    field_names: tuple[str, ...],
+                    decimals: int,
+                    suffix: str = "",
+                ) -> str:
+                    if supplier_row is None:
+                        return "N/A"
                     for field_name in field_names:
-                        raw_value = selected_record.get(field_name)
+                        raw_value = supplier_row.get(field_name)
+                        if raw_value is None or pd.isna(raw_value):
+                            continue
                         try:
                             numeric_value = float(raw_value)
                         except (TypeError, ValueError):
                             continue
                         if np.isfinite(numeric_value):
-                            return numeric_value
-                    return fallback
+                            return f"{numeric_value:.{decimals}f}{suffix}"
+                    return "N/A"
 
-                selected_quality_score = quality_value(
-                    "Quality Score",
-                    fallback=0.0,
+                selected_quality_score = dataset_value(
+                    ("Quality Score",), 0, " / 100"
                 )
-                selected_cpk = quality_value(
-                    "Process Capability (Cpk)",
-                    "Process Capability",
-                    fallback=0.0,
+                if selected_quality_score == "N/A" and supplier_row is not None:
+                    # Quality Score is derived when the uploaded file contains
+                    # the five new quality inputs but no precomputed score.
+                    quality_scope = uploaded_dataset
+                    if "Part Description" in quality_scope.columns:
+                        description_key = str(selected_record["Part Description"]).strip().casefold()
+                        description_scope = quality_scope[
+                            quality_scope["Part Description"].astype(str).str.strip().str.casefold()
+                            == description_key
+                        ]
+                        if not description_scope.empty:
+                            quality_scope = description_scope
+                    try:
+                        quality_scores, _ = calculate_quality_score(quality_scope)
+                        calculated_score = quality_scores.get(supplier_row.name)
+                        if calculated_score is not None and np.isfinite(float(calculated_score)):
+                            selected_quality_score = f"{float(calculated_score):.0f} / 100"
+                    except (KeyError, TypeError, ValueError):
+                        pass
+                inspection_time = dataset_value(
+                    ("Inspection Time", "Inspection Time (Hours)"), 2
                 )
-                selected_cart_days = quality_value(
-                    "CART (Days)",
-                    "Corrective Action Response Time",
-                    fallback=0.0,
+                process_capability = dataset_value(
+                    ("Process Capability", "Process Capability (Cpk)"), 2
                 )
-                inspection_time_hours = quality_value(
-                    "Inspection Time (Hours)",
-                    "Inspection Time",
-                    fallback=max(0.5, 2.0 + selected_cart_days * 0.5),
+                average_rpn = dataset_value(
+                    ("Average RPN", "FMEA Risk (Average RPN)", "FMEA RPN"), 1
                 )
-                average_rpn = quality_value(
-                    "Average RPN",
-                    "FMEA Risk (Average RPN)",
-                    "FMEA RPN",
-                    fallback=min(
-                        180.0,
-                        max(
-                            25.0,
-                            float(selected_record["Defect Rate (%)"]) * 18.0
-                            + float(selected_record["Warranty Claims"]) * 5.0
-                            + max(0.0, 2.0 - selected_cpk) * 50.0,
-                        ),
-                    ),
+                failure_rate = dataset_value(
+                    ("Failure Rate", "Failure Rate (%)"), 2, "%"
                 )
-                failure_rate = quality_value(
-                    "Failure Rate (%)",
-                    "Failure Rate",
-                    fallback=max(0.05, float(selected_record["Defect Rate (%)"]) * 0.35),
-                )
-                oem_experience_map = {
-                    "Bosch": 100,
-                    "Brose": 100,
-                    "ZF": 100,
-                    "Forvia": 85,
-                    "Grammer": 85,
-                    "Hella": 85,
-                    "Lear": 85,
-                    "Eissmann Automotive": 70,
-                    "Autoneum": 70,
-                    "Adler Pelzer": 70,
-                    "Borgers": 70,
-                    "Novares": 70,
-                    "Webasto": 70,
-                    "Inalfa": 70,
-                    "Gestamp": 70,
-                    "Benteler": 70,
-                    "Kostal": 70,
-                    "Marelli": 70,
-                }
-                oem_experience = quality_value(
-                    "OEM Experience",
-                    "OEM Experience Score",
-                    fallback=float(oem_experience_map.get(selected_record["Supplier Name"], 40)),
+                oem_experience = dataset_value(
+                    ("OEM Experience", "OEM Experience Score"), 0, " / 100"
                 )
 
                 render_numeric_metrics(
                     [
-                        (t("quality_score"), f"{selected_quality_score:.0f} / 100"),
-                        (t("supplier_quality_inspection_time"), f"{inspection_time_hours:.1f} h"),
-                        (t("supplier_quality_process_capability"), f"{selected_cpk:.2f}"),
-                        (t("supplier_quality_fmea_risk"), f"{average_rpn:.0f}"),
-                        (t("supplier_quality_failure_rate"), f"{failure_rate:.2f}%"),
-                        (t("supplier_quality_oem_experience"), f"{oem_experience:.0f} / 100"),
+                        (t("quality_score"), selected_quality_score),
+                        (t("supplier_quality_inspection_time"), inspection_time),
+                        (t("supplier_quality_process_capability"), process_capability),
+                        (t("supplier_quality_fmea_risk"), average_rpn),
+                        (t("supplier_quality_failure_rate"), failure_rate),
+                        (t("supplier_quality_oem_experience"), oem_experience),
                     ],
                     3,
                 )
@@ -5354,6 +5382,37 @@ def supplier_optimization_page() -> None:
                 ]
             )
 
+        def report_value(source: Any, *field_names: str) -> Any:
+            """Return the first non-empty value among compatible report fields."""
+            for field_name in field_names:
+                value = source.get(field_name, "")
+                if value is None:
+                    continue
+                try:
+                    if pd.isna(value):
+                        continue
+                except (TypeError, ValueError):
+                    pass
+                if str(value).strip() and str(value).strip().lower() not in {"nan", "none"}:
+                    return value
+            return ""
+
+        # The export dataframe contains Delivery Score but older report
+        # records may not contain the three delivery inputs. Pull the actual
+        # values for the recommended supplier from its full result row.
+        recommended_delivery_score = report_value(
+            recommended_row, "Delivery", "Delivery Score"
+        )
+        recommended_on_time_delivery = report_value(
+            recommended_row, "On-Time Delivery", "On-Time Delivery (%)"
+        )
+        recommended_lead_time = report_value(
+            recommended_row, "Lead Time", "Lead Time (Days)"
+        )
+        recommended_delivery_accuracy = report_value(
+            recommended_row, "Delivery Accuracy", "Delivery Accuracy (%)"
+        )
+
         quality_performance_headers = [
             t("supplier_column_name"),
             t("optimization_quality_score_detail"),
@@ -5390,13 +5449,42 @@ def supplier_optimization_page() -> None:
             [cell(header, header_cell_style) for header in delivery_performance_headers]
         ]
         for _, row in ranking_source.iterrows():
+            is_recommended = (
+                str(row.get("Supplier", "")).strip()
+                == str(recommended_supplier).strip()
+            )
+            delivery_score = report_value(row, "Delivery", "Delivery Score")
+            on_time_delivery = report_value(
+                row, "On-Time Delivery", "On-Time Delivery (%)"
+            )
+            lead_time = report_value(row, "Lead Time", "Lead Time (Days)")
+            delivery_accuracy = report_value(
+                row, "Delivery Accuracy", "Delivery Accuracy (%)"
+            )
+            if is_recommended:
+                delivery_score = delivery_score or recommended_delivery_score
+                on_time_delivery = on_time_delivery or recommended_on_time_delivery
+                lead_time = lead_time or recommended_lead_time
+                delivery_accuracy = delivery_accuracy or recommended_delivery_accuracy
             delivery_performance_rows.append(
                 [
                     cell(row.get("Supplier", "")),
-                    cell(number(row.get("Delivery", ""))),
-                    cell(number(row.get("On-Time Delivery", ""))),
-                    cell(number(row.get("Lead Time", ""))),
-                    cell(number(row.get("Delivery Accuracy", ""))),
+                    cell(number(delivery_score)),
+                    cell(
+                        f"{number(on_time_delivery, 1)}%"
+                        if str(on_time_delivery).strip()
+                        else ""
+                    ),
+                    cell(
+                        f"{number(lead_time, 1)} Days"
+                        if str(lead_time).strip()
+                        else ""
+                    ),
+                    cell(
+                        f"{number(delivery_accuracy, 1)}%"
+                        if str(delivery_accuracy).strip()
+                        else ""
+                    ),
                 ]
             )
 
@@ -5605,6 +5693,13 @@ def supplier_optimization_page() -> None:
                 except Exception as error:
                     st.error(t("optimization_upload_error", error=error))
                     st.stop()
+
+            # Keep the normalized uploaded dataset available to the Supplier
+            # Database page for direct profile-level data binding.
+            if uploaded_file is None:
+                st.session_state.pop("supplier_optimization_source_data", None)
+            else:
+                st.session_state["supplier_optimization_source_data"] = source_data.copy()
 
             st.markdown(
                 f'<div class="optimization-card-label">{t("optimization_preview_title")}</div>',
