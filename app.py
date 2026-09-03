@@ -5354,7 +5354,7 @@ def supplier_optimization_page() -> None:
                 ]
             )
 
-        performance_headers = [
+        quality_performance_headers = [
             t("supplier_column_name"),
             t("optimization_quality_score_detail"),
             t("optimization_quality_inspection_time"),
@@ -5362,13 +5362,12 @@ def supplier_optimization_page() -> None:
             t("optimization_quality_average_rpn"),
             t("optimization_quality_failure_rate"),
             t("optimization_quality_oem_experience"),
-            t("on_time_delivery"),
-            t("lead_time_days"),
-            t("delivery_accuracy"),
         ]
-        performance_rows: list[list[Any]] = [[cell(header, header_cell_style) for header in performance_headers]]
+        quality_performance_rows: list[list[Any]] = [
+            [cell(header, header_cell_style) for header in quality_performance_headers]
+        ]
         for _, row in ranking_source.iterrows():
-            performance_rows.append(
+            quality_performance_rows.append(
                 [
                     cell(row.get("Supplier", "")),
                     cell(number(row.get("Quality Score", row.get("Quality", "")))),
@@ -5377,6 +5376,24 @@ def supplier_optimization_page() -> None:
                     cell(number(row.get("Average RPN", ""))),
                     cell(number(row.get("Failure Rate", ""))),
                     cell(number(row.get("OEM Experience", ""), 0)),
+                ]
+            )
+
+        delivery_performance_headers = [
+            t("supplier_column_name"),
+            t("delivery_score"),
+            t("on_time_delivery"),
+            t("lead_time_days"),
+            t("delivery_accuracy"),
+        ]
+        delivery_performance_rows: list[list[Any]] = [
+            [cell(header, header_cell_style) for header in delivery_performance_headers]
+        ]
+        for _, row in ranking_source.iterrows():
+            delivery_performance_rows.append(
+                [
+                    cell(row.get("Supplier", "")),
+                    cell(number(row.get("Delivery", ""))),
                     cell(number(row.get("On-Time Delivery", ""))),
                     cell(number(row.get("Lead Time", ""))),
                     cell(number(row.get("Delivery Accuracy", ""))),
@@ -5444,8 +5461,14 @@ def supplier_optimization_page() -> None:
             PageBreak(),
             Paragraph(safe_text(t("optimization_performance_details")), section_style),
             styled_table(
-                performance_rows,
-                [34 * mm, 18 * mm, 18 * mm, 24 * mm, 22 * mm, 20 * mm, 22 * mm, 20 * mm, 20 * mm, 22 * mm],
+                quality_performance_rows,
+                [40 * mm, 24 * mm, 24 * mm, 28 * mm, 24 * mm, 22 * mm, 26 * mm],
+            ),
+            Spacer(1, 5 * mm),
+            Paragraph(safe_text(t("supplier_section_delivery_performance")), section_style),
+            styled_table(
+                delivery_performance_rows,
+                [52 * mm, 30 * mm, 38 * mm, 32 * mm, 38 * mm],
             ),
         ]
         document.build(story, onFirstPage=draw_page, onLaterPages=draw_page)
