@@ -3306,121 +3306,281 @@ def supplier_database_page() -> None:
                     f'<div class="supplier-section-heading">{t("supplier_section_quality_performance")}</div>',
                     unsafe_allow_html=True,
                 )
-                # Section 4 is bound to the normalized dataset uploaded through
-                # Supplier Optimization. If no file is uploaded, every value
-                # remains N/A rather than falling back to generated data.
-                uploaded_dataset = st.session_state.get("supplier_optimization_source_data")
-                if not isinstance(uploaded_dataset, pd.DataFrame) or uploaded_dataset.empty:
-                    uploaded_dataset = None
+                # Section 4 reads directly from the shared supplier dataset.
+                # Fall back to the same default dataset used by Optimization.
+                df = st.session_state.get("supplier_data")
+                if not isinstance(df, pd.DataFrame) or df.empty:
+                    df = st.session_state.get("supplier_optimization_source_data")
+                if not isinstance(df, pd.DataFrame) or df.empty:
+                    df = st.session_state.get("supplier_optimization_default_data")
+                if not isinstance(df, pd.DataFrame) or df.empty:
+                    df = supplier_data.copy()
 
-                def find_dataset_row(data: pd.DataFrame | None) -> pd.Series | None:
-                    if data is None or data.empty:
-                        return None
+                df = df.copy()
+                df.columns = [str(column).strip() for column in df.columns]
 
-                    supplier_column = next(
-                        (
-                            column
-                            for column in ("Supplier", "Supplier Name")
-                            if column in data.columns
-                        ),
-                        None,
-                    )
-                    if supplier_column is None:
-                        return None
-
-                    supplier_name = str(selected_record["Supplier Name"]).strip().casefold()
-                    matches = data[
-                        data[supplier_column].astype(str).str.strip().str.casefold()
-                        == supplier_name
-                    ]
-                    if matches.empty:
-                        return None
-
-                    # Prefer the selected part. Description matching supports
-                    # uploaded files whose part numbering differs from the UI catalogue.
-                    if "Part Number" in matches.columns:
-                        part_matches = matches[
-                            matches["Part Number"].astype(str).str.strip()
-                            == str(selected_record["Part Number"]).strip()
-                        ]
-                        if not part_matches.empty:
-                            matches = part_matches
-                    if "Part Description" in matches.columns:
-                        description_matches = matches[
-                            matches["Part Description"].astype(str).str.strip().str.casefold()
-                            == str(selected_record["Part Description"]).strip().casefold()
-                        ]
-                        if not description_matches.empty:
-                            matches = description_matches
-                    return matches.iloc[0]
-
-                supplier_row = find_dataset_row(uploaded_dataset)
-
-                def dataset_value(
-                    field_names: tuple[str, ...],
-                    decimals: int,
-                    suffix: str = "",
-                ) -> str:
-                    if supplier_row is None:
-                        return "N/A"
-                    for field_name in field_names:
-                        raw_value = supplier_row.get(field_name)
-                        if raw_value is None or pd.isna(raw_value):
-                            continue
-                        try:
-                            numeric_value = float(raw_value)
-                        except (TypeError, ValueError):
-                            continue
-                        if np.isfinite(numeric_value):
-                            return f"{numeric_value:.{decimals}f}{suffix}"
-                    return "N/A"
-
-                selected_quality_score = dataset_value(
-                    ("Quality Score",), 0, " / 100"
+                # When the page is opened before Optimization has initialized
+                # its shared default dataframe, enrich only the legacy local
+                # catalogue fallback with the same quality inputs used by the
+                # Optimization default dataset.
+                using_catalogue_fallback = (
+                    "Record ID" in df.columns
+                    and "Supplier Name" in df.columns
+                    and "Supplier" not in df.columns
                 )
-                if selected_quality_score == "N/A" and supplier_row is not None:
-                    # Quality Score is derived when the uploaded file contains
-                    # the five new quality inputs but no precomputed score.
-                    quality_scope = uploaded_dataset
+                if using_catalogue_fallback:
+                    catalogue_quality_rows: list[dict[str, Any]] = []
+                    for _, catalogue_row in df.iterrows():
+                        supplier_name = str(catalogue_row["Supplier Name"])
+                        part_number = str(catalogue_row["Part Number"])
+                        part_index = next(
+                            (
+                                index
+                                for index, record in enumerate(part_records)
+                                if record[0] == part_number
+                            ),
+                            0,
+                        )
+                        candidate_names = part_records[part_index][-1]
+                        candidate_position = (
+                            candidate_names.index(supplier_name)
+                            if supplier_name in candidate_names
+                            else 0
+                        )
+                        supplier_index = (
+                            supplier_names.index(supplier_name)
+                            if supplier_name in supplier_names
+                            else 0
+                        )
+                        catalogue_quality_rows.append(
+                            {
+                                "Inspection Time": round(
+                                    1.8
+                                    + (
+                                        (supplier_index + part_index * 2 + candidate_position)
+                                        % 8
+                                    )
+                                    * 0.35,
+                                    2,
+                                ),
+                                "Process Capability": round(
+                                    1.28
+                                    + (
+                                        (supplier_index * 3 + part_index + candidate_position)
+                                        % 8
+                                    )
+                                    * 0.06,
+                                    2,
+                                ),
+                                "Average RPN": round(
+                                    38
+                                    + (
+                                        (supplier_index * 7 + part_index * 5 + candidate_position * 3)
+                                        % 12
+                                    )
+                                    * 6.5,
+                                    1,
+                                ),
+                                "Failure Rate": round(
+                                    0.08
+                                    + (
+                                        (supplier_index * 2 + part_index + candidate_position)
+                                        % 9
+                                    )
+                                    * 0.08,
+                                    2,
+                                ),
+                                "OEM Experience": int(
+                                    oem_experience_scores.get(supplier_name, 40)
+                                ),
+                            }
+                        )
+                    catalogue_quality_data = pd.DataFrame(
+                        catalogue_quality_rows,
+                        index=df.index,
+                    )
+                    for quality_column in catalogue_quality_data.columns:
+                        if quality_column not in df.columns:
+                            df[quality_column] = catalogue_quality_data[quality_column]
+
+                # Normalize equivalent source labels into the exact canonical
+                # names used by Section 4. Only rename when the canonical
+                # column is absent, so existing values are never overwritten.
+                quality_column_aliases = {
+                    "Inspection Time for Defective Part": "Inspection Time",
+                    "Inspection Time (Hours)": "Inspection Time",
+                    "FMEA Average RPN": "Average RPN",
+                    "FMEA Risk (Average RPN)": "Average RPN",
+                    "Process Capability (Cpk)": "Process Capability",
+                    "Failure Rate (%)": "Failure Rate",
+                    "OEM Experience Score": "OEM Experience",
+                }
+                df.rename(
+                    columns={
+                        source_name: canonical_name
+                        for source_name, canonical_name in quality_column_aliases.items()
+                        if source_name in df.columns and canonical_name not in df.columns
+                    },
+                    inplace=True,
+                )
+
+                supplier_column = (
+                    "Supplier"
+                    if "Supplier" in df.columns
+                    else "Supplier Name"
+                    if "Supplier Name" in df.columns
+                    else None
+                )
+                supplier_row = pd.DataFrame()
+
+                if supplier_column is not None:
+                    selected_supplier_name = str(
+                        selected_record["Supplier Name"]
+                    ).strip().casefold()
+                    supplier_row = df[
+                        df[supplier_column]
+                        .astype(str)
+                        .str.strip()
+                        .str.casefold()
+                        == selected_supplier_name
+                    ]
+
+                    if (
+                        not supplier_row.empty
+                        and "Part Description" in supplier_row.columns
+                    ):
+                        selected_description = str(
+                            selected_record["Part Description"]
+                        ).strip().casefold()
+                        part_rows = supplier_row[
+                            supplier_row["Part Description"]
+                            .astype(str)
+                            .str.strip()
+                            .str.casefold()
+                            == selected_description
+                        ]
+                        if not part_rows.empty:
+                            supplier_row = part_rows
+
+                # Extract the five quality inputs directly from the selected
+                # supplier row using the canonical dataset column names.
+                if not supplier_row.empty:
+                    inspection_time = (
+                        supplier_row["Inspection Time"].iloc[0]
+                        if "Inspection Time" in supplier_row.columns
+                        else "N/A"
+                    )
+                    process_cap = (
+                        supplier_row["Process Capability"].iloc[0]
+                        if "Process Capability" in supplier_row.columns
+                        else "N/A"
+                    )
+                    avg_rpn = (
+                        supplier_row["Average RPN"].iloc[0]
+                        if "Average RPN" in supplier_row.columns
+                        else "N/A"
+                    )
+                    failure_rate = (
+                        supplier_row["Failure Rate"].iloc[0]
+                        if "Failure Rate" in supplier_row.columns
+                        else "N/A"
+                    )
+                    oem_exp = (
+                        supplier_row["OEM Experience"].iloc[0]
+                        if "OEM Experience" in supplier_row.columns
+                        else "N/A"
+                    )
+                else:
+                    inspection_time = process_cap = avg_rpn = failure_rate = oem_exp = "N/A"
+
+                supplier_record = supplier_row.iloc[0] if not supplier_row.empty else None
+
+                def get_numeric_value(
+                    column_name: str,
+                    default: float | None = None,
+                ) -> float | None:
+                    """Safely extract one numeric value from the selected row."""
+                    if supplier_record is None or column_name not in supplier_record.index:
+                        return default
+                    try:
+                        value = float(supplier_record[column_name])
+                    except (TypeError, ValueError):
+                        return default
+                    return value if np.isfinite(value) else default
+
+                process_capability = process_cap
+                average_rpn = avg_rpn
+                oem_experience = oem_exp
+
+                # The local catalogue's old Quality Score is not used; derive
+                # the current score from the five new quality inputs instead.
+                quality_score = (
+                    None
+                    if using_catalogue_fallback
+                    else get_numeric_value("Quality Score")
+                )
+                if quality_score is None and supplier_record is not None:
+                    # Calculate Quality Score from the five exact quality fields
+                    # when the dataset does not provide a precomputed score.
+                    quality_scope = df
                     if "Part Description" in quality_scope.columns:
-                        description_key = str(selected_record["Part Description"]).strip().casefold()
+                        selected_description = str(
+                            selected_record["Part Description"]
+                        ).strip().casefold()
                         description_scope = quality_scope[
-                            quality_scope["Part Description"].astype(str).str.strip().str.casefold()
-                            == description_key
+                            quality_scope["Part Description"]
+                            .astype(str)
+                            .str.strip()
+                            .str.casefold()
+                            == selected_description
                         ]
                         if not description_scope.empty:
                             quality_scope = description_scope
+
+                    quality_model_data = quality_scope.copy()
                     try:
-                        quality_scores, _ = calculate_quality_score(quality_scope)
-                        calculated_score = quality_scores.get(supplier_row.name)
-                        if calculated_score is not None and np.isfinite(float(calculated_score)):
-                            selected_quality_score = f"{float(calculated_score):.0f} / 100"
+                        quality_scores, _ = calculate_quality_score(quality_model_data)
+                        quality_score = float(
+                            quality_scores.loc[supplier_record.name]
+                        )
                     except (KeyError, TypeError, ValueError):
-                        pass
-                inspection_time = dataset_value(
-                    ("Inspection Time", "Inspection Time (Hours)"), 2
-                )
-                process_capability = dataset_value(
-                    ("Process Capability", "Process Capability (Cpk)"), 2
-                )
-                average_rpn = dataset_value(
-                    ("Average RPN", "FMEA Risk (Average RPN)", "FMEA RPN"), 1
-                )
-                failure_rate = dataset_value(
-                    ("Failure Rate", "Failure Rate (%)"), 2, "%"
-                )
-                oem_experience = dataset_value(
-                    ("OEM Experience", "OEM Experience Score"), 0, " / 100"
-                )
+                        quality_score = None
+
+                def format_metric(
+                    value: Any,
+                    decimals: int = 2,
+                    suffix: str = "",
+                ) -> str:
+                    if value is None or (isinstance(value, str) and value == "N/A"):
+                        return "N/A"
+                    try:
+                        numeric_value = float(value)
+                    except (TypeError, ValueError):
+                        return "N/A"
+                    if not np.isfinite(numeric_value):
+                        return "N/A"
+                    return f"{numeric_value:.{decimals}f}{suffix}"
 
                 render_numeric_metrics(
                     [
-                        (t("quality_score"), selected_quality_score),
-                        (t("supplier_quality_inspection_time"), inspection_time),
-                        (t("supplier_quality_process_capability"), process_capability),
-                        (t("supplier_quality_fmea_risk"), average_rpn),
-                        (t("supplier_quality_failure_rate"), failure_rate),
-                        (t("supplier_quality_oem_experience"), oem_experience),
+                        (t("quality_score"), format_metric(quality_score, 0, " / 100")),
+                        (
+                            t("supplier_quality_inspection_time"),
+                            format_metric(inspection_time, 2),
+                        ),
+                        (
+                            t("supplier_quality_process_capability"),
+                            format_metric(process_capability, 2),
+                        ),
+                        (t("supplier_quality_fmea_risk"), format_metric(average_rpn, 0)),
+                        (
+                            t("supplier_quality_failure_rate"),
+                            format_metric(failure_rate, 2, "%"),
+                        ),
+                        (
+                            t("supplier_quality_oem_experience"),
+                            format_metric(oem_experience, 0, " / 100"),
+                        ),
                     ],
                     3,
                 )
@@ -5563,6 +5723,9 @@ def supplier_optimization_page() -> None:
         return document_buffer.getvalue()
 
     default_data = build_default_dataset()
+    # Share the same complete optimization default dataset with the
+    # Supplier Database page when no user file has been uploaded.
+    st.session_state["supplier_optimization_default_data"] = default_data.copy()
     part_lookup = part_catalogue.set_index("Part Number").to_dict("index")
 
     with st.container(key="optimization_portal_content"):
@@ -5697,8 +5860,10 @@ def supplier_optimization_page() -> None:
             # Keep the normalized uploaded dataset available to the Supplier
             # Database page for direct profile-level data binding.
             if uploaded_file is None:
+                st.session_state["supplier_data"] = source_data.copy()
                 st.session_state.pop("supplier_optimization_source_data", None)
             else:
+                st.session_state["supplier_data"] = source_data.copy()
                 st.session_state["supplier_optimization_source_data"] = source_data.copy()
 
             st.markdown(
