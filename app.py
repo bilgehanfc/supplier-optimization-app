@@ -3684,6 +3684,69 @@ def supplier_database_page() -> None:
         comparison_records = supplier_data[
             supplier_data["Record ID"].isin(comparison_ids)
         ]
+
+        # Use the same uploaded/default optimization dataset for comparison
+        # details so the cards expose the current quality model fields.
+        comparison_dataset = (
+            df.copy()
+            if isinstance(locals().get("df"), pd.DataFrame)
+            else st.session_state.get("supplier_data")
+        )
+        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
+            comparison_dataset = st.session_state.get("supplier_optimization_source_data")
+        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
+            comparison_dataset = st.session_state.get("supplier_optimization_default_data")
+        if not isinstance(comparison_dataset, pd.DataFrame) or comparison_dataset.empty:
+            comparison_dataset = supplier_data.copy()
+        comparison_dataset = comparison_dataset.copy()
+        comparison_dataset.columns = [
+            str(column).strip() for column in comparison_dataset.columns
+        ]
+        comparison_dataset.rename(
+            columns={
+                source_name: canonical_name
+                for source_name, canonical_name in {
+                    "Inspection Time for Defective Part": "Inspection Time",
+                    "Inspection Time (Hours)": "Inspection Time",
+                    "FMEA Average RPN": "Average RPN",
+                    "FMEA Risk (Average RPN)": "Average RPN",
+                    "Process Capability (Cpk)": "Process Capability",
+                    "Failure Rate (%)": "Failure Rate",
+                    "OEM Experience Score": "OEM Experience",
+                }.items()
+                if source_name in comparison_dataset.columns
+                and canonical_name not in comparison_dataset.columns
+            },
+            inplace=True,
+        )
+        comparison_supplier_column = (
+            "Supplier"
+            if "Supplier" in comparison_dataset.columns
+            else "Supplier Name"
+            if "Supplier Name" in comparison_dataset.columns
+            else None
+        )
+
+        def comparison_numeric_value(
+            source_row: pd.Series | None,
+            column_name: str,
+            default: float | None = None,
+        ) -> float | None:
+            if source_row is None or column_name not in source_row.index:
+                return default
+            try:
+                value = float(source_row[column_name])
+            except (TypeError, ValueError):
+                return default
+            return value if np.isfinite(value) else default
+
+        def comparison_format_value(
+            value: float | None,
+            decimals: int = 2,
+            suffix: str = "",
+        ) -> str:
+            return "N/A" if value is None else f"{value:.{decimals}f}{suffix}"
+
         if comparison_records.empty:
             st.info(t("supplier_detail_no_selection"))
         else:
@@ -3702,13 +3765,102 @@ def supplier_database_page() -> None:
                     with st.container(border=True):
                         st.metric(t("osa_score"), f"{row['OSA Score']:.0f} / 100")
                         st.metric(t("annual_cost"), f"€{row['Annual Cost (€)']:,.0f}")
-                        st.metric(t("quality_score"), f"{row['Quality Score']:.0f} / 100")
+                        comparison_quality_row = None
+                        if comparison_supplier_column is not None:
+                            comparison_supplier_name = str(
+                                row["Supplier Name"]
+                            ).strip().casefold()
+                            comparison_matches = comparison_dataset[
+                                comparison_dataset[comparison_supplier_column]
+                                .astype(str)
+                                .str.strip()
+                                .str.casefold()
+                                == comparison_supplier_name
+                            ]
+                            if (
+                                not comparison_matches.empty
+                                and "Part Description" in comparison_matches.columns
+                            ):
+                                comparison_part_description = str(
+                                    row["Part Description"]
+                                ).strip().casefold()
+                                part_matches = comparison_matches[
+                                    comparison_matches["Part Description"]
+                                    .astype(str)
+                                    .str.strip()
+                                    .str.casefold()
+                                    == comparison_part_description
+                                ]
+                                if not part_matches.empty:
+                                    comparison_matches = part_matches
+                            if not comparison_matches.empty:
+                                comparison_quality_row = comparison_matches.iloc[0]
+
+                        # Display the Quality Score already present in the
+                        # selected supplier row; do not recalculate it here.
+                        comparison_quality_score = comparison_numeric_value(
+                            comparison_quality_row,
+                            "Quality Score",
+                        )
+
+                        st.metric(
+                            t("quality_score"),
+                            comparison_format_value(comparison_quality_score, 0, " / 100"),
+                        )
                         st.metric(t("delivery_score"), f"{row['Delivery Score']:.0f} / 100")
                         comparison_values = [
-                            (t("defect_rate"), f"{row['Defect Rate (%)']:.2f}%"),
-                            (t("incoming_acceptance_rate"), f"{row['Incoming Acceptance Rate (%)']:.2f}%"),
-                            (t("process_capability_cpk"), f"{row['Process Capability (Cpk)']:.2f}"),
-                            (t("cart_days"), f"{row['CART (Days)']:.1f}"),
+                            (
+                                t("supplier_quality_inspection_time"),
+                                comparison_format_value(
+                                    comparison_numeric_value(
+                                        comparison_quality_row,
+                                        "Inspection Time",
+                                    ),
+                                    2,
+                                ),
+                            ),
+                            (
+                                t("supplier_quality_process_capability"),
+                                comparison_format_value(
+                                    comparison_numeric_value(
+                                        comparison_quality_row,
+                                        "Process Capability",
+                                    ),
+                                    2,
+                                ),
+                            ),
+                            (
+                                t("supplier_quality_fmea_risk"),
+                                comparison_format_value(
+                                    comparison_numeric_value(
+                                        comparison_quality_row,
+                                        "Average RPN",
+                                    ),
+                                    0,
+                                ),
+                            ),
+                            (
+                                t("supplier_quality_failure_rate"),
+                                comparison_format_value(
+                                    comparison_numeric_value(
+                                        comparison_quality_row,
+                                        "Failure Rate",
+                                    ),
+                                    2,
+                                    "%",
+                                ),
+                            ),
+                            (
+                                t("supplier_quality_oem_experience"),
+                                comparison_format_value(
+                                    comparison_numeric_value(
+                                        comparison_quality_row,
+                                        "OEM Experience",
+                                    ),
+                                    0,
+                                    " / 100",
+                                ),
+                            ),
                             (t("on_time_delivery"), f"{row['On-Time Delivery (%)']:.2f}%"),
                             (t("lead_time_days"), f"{row['Lead Time (Days)']:.1f}"),
                             (t("delivery_accuracy"), f"{row['Delivery Accuracy (%)']:.2f}%"),
