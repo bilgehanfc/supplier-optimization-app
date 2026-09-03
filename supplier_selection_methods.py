@@ -18,6 +18,37 @@ import pandas as pd
 from scipy.optimize import linprog
 
 
+# Unified Quality Performance model used by the application before the
+# Cost/Quality/Delivery decision matrix is sent to an optimization method.
+QUALITY_SCORE_WEIGHTS: dict[str, float] = {
+    "Inspection Time": 0.35,
+    "Process Capability": 0.25,
+    "Average RPN": 0.20,
+    "Failure Rate": 0.10,
+    "OEM Experience": 0.10,
+}
+QUALITY_SCORE_IMPACTS: dict[str, str] = {
+    "Inspection Time": "cost",
+    "Process Capability": "benefit",
+    "Average RPN": "cost",
+    "Failure Rate": "cost",
+    "OEM Experience": "benefit",
+}
+
+# Explicit public API used by app.py. Keeping the quality model symbols here
+# makes the app/backend contract clear and prevents accidental omission during
+# future module refactors.
+__all__ = [
+    "QUALITY_SCORE_WEIGHTS",
+    "QUALITY_SCORE_IMPACTS",
+    "calculate_quality_score",
+    "topsis",
+    "weighted_sum",
+    "preemptive_optimization",
+    "goal_programming",
+]
+
+
 def _numeric_series(
     values: Mapping[str, float] | list[float] | tuple[float, ...],
     labels: pd.Index,
@@ -136,6 +167,42 @@ def _min_max_normalize(matrix: pd.DataFrame, impacts: pd.Series) -> pd.DataFrame
         else:
             normalized[column] = (high - values) / (high - low)
     return normalized
+
+
+def calculate_quality_score(
+    data: pd.DataFrame,
+) -> tuple[pd.Series, pd.DataFrame]:
+    """Calculate the unified 0-100 Quality Score and criterion contributions.
+
+    Each quality criterion is min-max normalized within the evaluated supplier
+    set. Cost criteria are inverted so that higher normalized values always
+    represent better performance. Contributions are returned as points on the
+    final 0-100 score after applying the fixed business weights.
+
+    Returns:
+        quality_scores: A Series indexed like ``data`` with values from 0 to 100.
+        contributions: A DataFrame containing the weighted point contribution of
+            each quality criterion, also indexed like ``data``.
+    """
+    required_columns = list(QUALITY_SCORE_WEIGHTS)
+    missing_columns = [column for column in required_columns if column not in data.columns]
+    if missing_columns:
+        raise ValueError(f"missing quality-performance columns: {missing_columns}")
+
+    quality_matrix = data[required_columns].apply(pd.to_numeric, errors="coerce")
+    if quality_matrix.isna().any().any():
+        invalid_columns = quality_matrix.columns[quality_matrix.isna().any()].tolist()
+        raise ValueError(f"quality-performance fields must be numeric: {invalid_columns}")
+    if not np.isfinite(quality_matrix.to_numpy()).all():
+        raise ValueError("quality-performance fields must contain only finite numbers")
+
+    impacts = pd.Series(QUALITY_SCORE_IMPACTS, dtype="object").reindex(required_columns)
+    weights = pd.Series(QUALITY_SCORE_WEIGHTS, dtype=float).reindex(required_columns)
+    normalized = _min_max_normalize(quality_matrix, impacts)
+    contributions = normalized.mul(weights, axis=1).mul(100.0)
+    quality_scores = contributions.sum(axis=1).clip(0.0, 100.0)
+    quality_scores.name = "Quality Score"
+    return quality_scores, contributions
 
 
 def weighted_sum(

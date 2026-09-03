@@ -1,6 +1,1 @@
-streamlit
-pandas
-numpy
-scipy
-openpyxl
-xlrd
+reportlab>=4.0
